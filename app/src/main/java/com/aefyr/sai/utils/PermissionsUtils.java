@@ -1,6 +1,7 @@
 package com.aefyr.sai.utils;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -17,7 +18,7 @@ public class PermissionsUtils {
     }
 
     public static boolean checkAndRequestStoragePermissions(Fragment f) {
-        return checkAndRequestPermissions(f, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE_STORAGE_PERMISSIONS);
+        return checkAndRequestPermissions(f, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.REQUEST_INSTALL_PACKAGES}, REQUEST_CODE_STORAGE_PERMISSIONS);
     }
 
     public static boolean checkAndRequestShizukuPermissions(Activity a) {

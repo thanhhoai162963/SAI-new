@@ -1,127 +1,150 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.aefyr.sai.view.ViewSwitcherLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/container_dialog_installerx"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:layout_height="wrap_content">
 
-    <LinearLayout
-        android:id="@+id/container_installerx_no_data"
+    <com.aefyr.sai.view.ViewSwitcherLayout
+        android:id="@+id/container_dialog_installerx"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp"
-        android:paddingBottom="8dp">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tv_installerx_no_data"
+        <LinearLayout
+            android:id="@+id/container_installerx_no_data"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp"
-            android:paddingBottom="4dp"
-            android:text="@string/installerx_dialog_choose_filepicker" />
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="8dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_installerx_fp_internal"
-            style="@style/SAIMaterialButton"
+            <TextView
+                android:id="@+id/tv_installerx_no_data"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                android:paddingBottom="4dp"
+                android:text="@string/installerx_dialog_choose_filepicker" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_installerx_fp_internal"
+                style="@style/SAIMaterialButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/filepicker_internal" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_installerx_fp_saf"
+                style="@style/SAIMaterialButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/filepicker_saf" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_installerx_obb"
+                style="@style/SAIMaterialButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/set_up_obb"
+                android:visibility="visible" />
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_dialog_installerx_content"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/filepicker_internal" />
+            android:layout_height="match_parent"
+            android:overScrollMode="never"
+            android:visibility="gone">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/button_installerx_fp_saf"
-            style="@style/SAIMaterialButton"
+        </androidx.recyclerview.widget.RecyclerView>
+
+        <LinearLayout
+            android:id="@+id/container_installerx_loading"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/filepicker_saf" />
-    </LinearLayout>
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:paddingBottom="16dp"
+            android:visibility="gone">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_dialog_installerx_content"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:overScrollMode="never"
-        android:visibility="gone">
+            <ProgressBar
+                android:id="@+id/progress_installerx_loading"
+                style="?android:attr/progressBarStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:indeterminate="true"
+                android:padding="8dp" />
 
-    </androidx.recyclerview.widget.RecyclerView>
+            <TextView
+                android:id="@+id/tv_installerx_loading"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/installerx_dialog_loading" />
+        </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/container_installerx_loading"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:paddingBottom="16dp"
-        android:visibility="gone">
-
-        <ProgressBar
-            android:id="@+id/progress_installerx_loading"
-            style="?android:attr/progressBarStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:indeterminate="true"
-            android:padding="8dp" />
-
-        <TextView
-            android:id="@+id/tv_installerx_loading"
+        <LinearLayout
+            android:id="@+id/container_installerx_warning"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="@string/installerx_dialog_loading" />
-    </LinearLayout>
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:paddingBottom="16dp"
+            android:visibility="gone">
 
-    <LinearLayout
-        android:id="@+id/container_installerx_warning"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:paddingBottom="16dp"
-        android:visibility="gone">
+            <ImageView
+                android:id="@+id/iv_installerx_warning"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_gravity="center"
+                app:srcCompat="@drawable/ic_warning"
+                app:tint="?colorAccent" />
 
-        <ImageView
-            android:id="@+id/iv_installerx_warning"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
-            android:layout_gravity="center"
-            android:tint="?colorAccent"
-            app:srcCompat="@drawable/ic_warning" />
+            <TextView
+                android:id="@+id/tv_installerx_warning"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="4dp"
+                android:text="@string/installerx_dialog_warn_parsing_fail" />
+        </LinearLayout>
 
-        <TextView
-            android:id="@+id/tv_installerx_warning"
+        <LinearLayout
+            android:id="@+id/container_installerx_error"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:padding="4dp"
-            android:text="@string/installerx_dialog_warn_parsing_fail" />
-    </LinearLayout>
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:paddingBottom="16dp"
+            android:visibility="gone">
 
-    <LinearLayout
-        android:id="@+id/container_installerx_error"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:paddingBottom="16dp"
-        android:visibility="gone">
+            <ImageView
+                android:id="@+id/iv_installerx_error"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_gravity="center"
+                app:srcCompat="@drawable/ic_warning"
+                app:tint="?colorAccent" />
 
-        <ImageView
-            android:id="@+id/iv_installerx_error"
-            android:layout_width="72dp"
-            android:layout_height="72dp"
-            android:layout_gravity="center"
-            android:tint="?colorAccent"
-            app:srcCompat="@drawable/ic_warning" />
+            <TextView
+                android:id="@+id/tv_installerx_error"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="4dp"
+                android:text="@string/installerx_dialog_error" />
 
-        <TextView
-            android:id="@+id/tv_installerx_error"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:padding="4dp"
-            android:text="@string/installerx_dialog_error" />
-    </LinearLayout>
+        </LinearLayout>
 
-</com.aefyr.sai.view.ViewSwitcherLayout>
+
+    </com.aefyr.sai.view.ViewSwitcherLayout>
+
+    <ProgressBar
+        android:id="@+id/progress_copy"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center"
+        android:indeterminateTint="@color/colorTextPrimaryRooter"
+        android:visibility="gone" />
+</FrameLayout>

@@ -39,10 +39,12 @@ android {
         sourceCompatibility = '1.8'
         targetCompatibility = '1.8'
     }
+
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
+    implementation 'com.wshunli.android:android-copy-assets:2.2.0'
 
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'androidx.documentfile:documentfile:1.0.1'
@@ -74,7 +76,11 @@ dependencies {
     implementation "rikka.shizuku:api:$shizuku_version"
     implementation "rikka.shizuku:provider:$shizuku_version"
 
-    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.3'
+//    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.3'
+
+    //rx
+    implementation "io.reactivex.rxjava3:rxjava:3.0.0"
+    implementation 'io.reactivex.rxjava3:rxandroid:3.0.0'
 }
 
 if (getGradle().getStartParameter().getTaskRequests().toString().contains("Normal")){

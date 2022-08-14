@@ -36,6 +36,12 @@ import com.aefyr.sai.utils.PreferencesHelper;
 import com.aefyr.sai.utils.SimpleAsyncTask;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -149,8 +155,7 @@ public class InstallerXDialogViewModel extends ViewModel {
         ApkSourceBuilder apkSourceBuilder = null;
 
         if (result.sourceType() == SourceType.ZIP) {
-            apkSourceBuilder = new ApkSourceBuilder(mContext)
-                    .fromZipContentUri(result.uris().get(0));
+            apkSourceBuilder = new ApkSourceBuilder(mContext).fromZipContentUri(result.uris().get(0));
 
         } else if (result.sourceType() == SourceType.APK_FILES) {
             apkSourceBuilder = new ApkSourceBuilder(mContext)

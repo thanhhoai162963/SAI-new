@@ -1,12 +1,15 @@
 package com.aefyr.sai.ui.activities;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.preference.PreferenceManager;
 
@@ -14,6 +17,7 @@ import com.aefyr.sai.R;
 import com.aefyr.sai.backup2.impl.DefaultBackupManager;
 import com.aefyr.sai.billing.BillingManager;
 import com.aefyr.sai.billing.DefaultBillingManager;
+import com.aefyr.sai.ui.dialogs.InstallerXDialogFragment;
 import com.aefyr.sai.ui.fragments.BackupFragment;
 import com.aefyr.sai.ui.fragments.Installer2Fragment;
 import com.aefyr.sai.ui.fragments.InstallerFragment;

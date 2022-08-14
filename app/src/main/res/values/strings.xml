@@ -12,6 +12,7 @@
     <string name="copied">Copied</string>
     <string name="dont_show_again">Don\'t show again</string>
     <string name="warning">Warning</string>
+    <string name="set_up_obb" translatable="false">Set up file Obb</string>
 
     <string name="filepicker_internal">Internal file picker</string>
     <string name="filepicker_saf">System file picker</string>

@@ -11,6 +11,7 @@
     <string name="dont_show_again">Đừng hiện lại nữa</string>
     <string name="warning">Warning</string>
     <string name="filepicker_internal">Bộ chọn tệp nội bộ</string>
+    <string name="set_up_obb">Cài đặt file Obb</string>
     <string name="filepicker_saf">Bộ chọn tệp hệ thống</string>
     <string name="permissions_required_storage">SAI yêu cầu quyền truy cập bộ lưu trữ</string>
     <string name="permissions_required_shizuku">SAI yêu cầu quyền sử dụng Máy chủ Shizuku</string>

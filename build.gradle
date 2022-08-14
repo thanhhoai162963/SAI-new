@@ -29,6 +29,7 @@ allprojects {
                 includeGroup "rikka.shizuku"
             }
         }
+        maven { url "https://oss.jfrog.org/libs-snapshot" }
     }
 }
 

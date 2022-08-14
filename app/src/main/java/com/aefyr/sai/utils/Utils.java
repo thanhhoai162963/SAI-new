@@ -95,6 +95,10 @@ public class Utils {
         return Build.VERSION.SDK_INT >= sdkInt;
     }
 
+    public static boolean belowApi(int sdkInt) {
+        return sdkInt > Build.VERSION.SDK_INT ;
+    }
+
     public static void hideKeyboard(Activity activity) {
         InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
         inputMethodManager.hideSoftInputFromWindow(activity.getWindow().getDecorView().getWindowToken(), 0);
