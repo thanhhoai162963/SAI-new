@@ -47,6 +47,8 @@ import com.aefyr.sai.viewmodels.factory.InstallerXDialogViewModelFactory;
 import com.github.angads25.filepicker.model.DialogConfigs;
 import com.github.angads25.filepicker.model.DialogProperties;
 
+import org.reactivestreams.Subscription;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -57,16 +59,23 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.FlowableSubscriber;
 import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.ObservableEmitter;
+import io.reactivex.rxjava3.core.ObservableOnSubscribe;
 import io.reactivex.rxjava3.core.Observer;
 import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
+@SuppressWarnings("ALL")
 public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment implements FilePickerDialogFragment.OnFilesSelectedListener, SimpleAlertDialogFragment.OnDismissListener {
     private static final int REQUEST_CODE_GET_FILES = 337;
     public static final int REQUEST_CODE_GET_FILES_OBB = 100;
@@ -94,10 +103,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
      * Create an instance of InstallerXDialogFragment with given apk source uri and UriHostFactory class.
      * If {@code apkSourceUri} is null, dialog will let user pick apk source file.
      * If {@code uriHostFactoryClass} is null, {@link com.aefyr.sai.installerx.resolver.urimess.impl.AndroidUriHost} will be used.
-     *
-     * @param apkSourceUri
-     * @param uriHostFactoryClass
-     * @return
      */
     public static InstallerXDialogFragment newInstance(@Nullable Uri apkSourceUri, @Nullable Class<? extends UriHostFactory> uriHostFactoryClass) {
         Bundle args = new Bundle();
@@ -242,7 +247,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             }
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (requireContext().checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                 SimpleAlertDialogFragment.newInstance(requireContext(), R.string.warning, R.string.installerx_thank_you_scoped_storage_very_cool).show(getChildFragmentManager(), DIALOG_TAG_Q_SAF_WARNING);
+                SimpleAlertDialogFragment.newInstance(requireContext(), R.string.warning, R.string.installerx_thank_you_scoped_storage_very_cool).show(getChildFragmentManager(), DIALOG_TAG_Q_SAF_WARNING);
                 return;
             }
         }
@@ -266,7 +271,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             boolean permissionsGranted = !(grantResults.length == 0 || grantResults[0] == PackageManager.PERMISSION_DENIED);
             switch (mActionAfterGettingStoragePermissions) {
                 case PICK_WITH_INTERNAL_FILEPICKER:
-                    if (permissionsGranted == false)
+                    if (!permissionsGranted)
                         AlertsUtils.showAlert(this, R.string.error, R.string.permissions_required_storage);
                     else
                         checkPermissionsAndPickFiles();
@@ -312,25 +317,30 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         }
     }
 
+    private boolean copyFileObb(Uri data) {
+        String pathSrc = getPath(data);
+        Path uriDir = unpackZip(pathSrc);
+        String pathObb = uriDir.fileName.replace(mPathObb, "");
+        copyFileOrDirectory(uriDir.pathName, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb);
+        mViewModel.setApkSourceUris(Collections.singletonList(data));
+        return true;
+    }
+
     private void backgroundTask(Uri data) {
         setShowHideProgress(true);
         Observable
-                .timer(6, TimeUnit.SECONDS)
+                .just(copyFileObb(data))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<Long>() {
+                .subscribe(new Observer<Boolean>() {
                     @Override
                     public void onSubscribe(@io.reactivex.rxjava3.annotations.NonNull Disposable d) {
                         mDisposable = d;
                     }
 
                     @Override
-                    public void onNext(@io.reactivex.rxjava3.annotations.NonNull Long aLong) {
-                        String pathSrc = getPath(data);
-                        Path uriDir = unpackZip(pathSrc);
-                        String pathObb = uriDir.fileName.replace(mPathObb, "");
-                        copyFileOrDirectory(uriDir.pathName, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb);
-                        mViewModel.setApkSourceUris(Collections.singletonList(data));
+                    public void onNext(@io.reactivex.rxjava3.annotations.NonNull Boolean aBoolean) {
+
                     }
 
                     @Override
@@ -342,7 +352,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                     public void onComplete() {
                         setShowHideProgress(false);
                     }
-
                 });
     }
 
@@ -469,8 +478,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 filename = ze.getName();
                 fileName1 = filename;
                 pathName = path + filename;
-                // Need to create directories if not exists, or
-                // it will generate an Exception...
                 if (ze.getName().contains("/obb/")) {
                     if (countFileObb == 0) {
                         mPathObb = ze.getName();
@@ -482,13 +489,12 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                     fmd.mkdirs();
                     continue;
                 }
-
                 FileOutputStream fout = new FileOutputStream(pathName);
-
-                while ((count = zis.read(buffer)) != -1) {
-                    fout.write(buffer, 0, count);
+                if (ze.getName().contains(".obb")) {
+                    while ((count = zis.read(buffer)) != -1) {
+                        fout.write(buffer, 0, count);
+                    }
                 }
-
                 fout.close();
                 zis.closeEntry();
             }

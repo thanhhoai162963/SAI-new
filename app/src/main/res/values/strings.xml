@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name" translatable="false">SAI</string>
     <string name="app_name_full" translatable="false">Split APKs Installer</string>
 
@@ -333,7 +333,7 @@
 
     <string name="installerx_android_uri_host_file_too_big">File is too big to copy and your system doesn\'t support reading SAF files without copying</string>
     <string name="installerx_thank_you_scoped_storage_very_cool">On Android 11 and up SAI requires storage permission to directly read files selected via system file picker due to scoped storage implementation making 0 sense. You can deny storage permission, but then SAI will have to copy selected files to parse them, SAI won\'t copy and parse large files.</string>
-
+    <string name="installerx_thank_you_obb_very_cool" tools:ignore="MissingTranslation">SAI cần bạn cấp quyền cài đặt file obb. Bạn vui lòng tìm SAI trong hệ thông và cấp quyền cài đặt file mở rộng.</string>
     <string name="theme_sai">SAI</string>
     <string name="theme_ruby">Ruby</string>
     <string name="theme_rena">Rena</string>

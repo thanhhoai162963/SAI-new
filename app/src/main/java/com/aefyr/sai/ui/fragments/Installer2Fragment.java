@@ -215,8 +215,7 @@ public class Installer2Fragment extends InstallerFragment implements FilePickerD
         if (checkPermission()) {
             InstallerXDialogFragment.newInstance(apkSourceUri, null).show(getChildFragmentManager(), "installerx_dialog");
         } else {
-            SimpleAlertDialogFragment.newInstance(requireContext(), R.string.warning, R.string.installerx_thank_you_scoped_storage_very_cool).show(getChildFragmentManager(), "DIALOG_TAG_Q_SAF_WARNING");
-
+            SimpleAlertDialogFragment.newInstance(requireContext(), R.string.warning, R.string.installerx_thank_you_obb_very_cool).show(getChildFragmentManager(), "DIALOG_TAG_Q_SAF_WARNING");
         }
 
     }
