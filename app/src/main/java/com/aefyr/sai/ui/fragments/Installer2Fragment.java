@@ -5,8 +5,10 @@ import android.content.ClipData;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +31,7 @@ import com.aefyr.sai.ui.dialogs.ErrorLogDialogFragment2;
 import com.aefyr.sai.ui.dialogs.FilePickerDialogFragment;
 import com.aefyr.sai.ui.dialogs.InstallationConfirmationDialogFragment;
 import com.aefyr.sai.ui.dialogs.InstallerXDialogFragment;
+import com.aefyr.sai.ui.dialogs.SimpleAlertDialogFragment;
 import com.aefyr.sai.ui.dialogs.ThemeSelectionDialogFragment;
 import com.aefyr.sai.ui.recycler.RecyclerPaddingDecoration;
 import com.aefyr.sai.utils.AlertsUtils;
@@ -49,7 +52,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class Installer2Fragment extends InstallerFragment implements FilePickerDialogFragment.OnFilesSelectedListener, InstallationConfirmationDialogFragment.ConfirmationListener, SaiPiSessionsAdapter.ActionDelegate {
+public class Installer2Fragment extends InstallerFragment implements FilePickerDialogFragment.OnFilesSelectedListener, InstallationConfirmationDialogFragment.ConfirmationListener, SaiPiSessionsAdapter.ActionDelegate, SimpleAlertDialogFragment.OnDismissListener {
     private static final String TAG = "Installer2Fragment";
 
     private static final int REQUEST_CODE_GET_FILES = 337;
@@ -64,6 +67,7 @@ public class Installer2Fragment extends InstallerFragment implements FilePickerD
     private Uri mPendingActionViewUri;
 
     private ToolTipsManager mToolTipsManager;
+    private Boolean mChekDialogPermission = true;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -208,7 +212,27 @@ public class Installer2Fragment extends InstallerFragment implements FilePickerD
         if (existingDialog != null)
             existingDialog.dismiss();
 
-        InstallerXDialogFragment.newInstance(apkSourceUri, null).show(getChildFragmentManager(), "installerx_dialog");
+        if (checkPermission()) {
+            InstallerXDialogFragment.newInstance(apkSourceUri, null).show(getChildFragmentManager(), "installerx_dialog");
+        } else {
+            SimpleAlertDialogFragment.newInstance(requireContext(), R.string.warning, R.string.installerx_thank_you_scoped_storage_very_cool).show(getChildFragmentManager(), "DIALOG_TAG_Q_SAF_WARNING");
+
+        }
+
+    }
+
+    private boolean checkPermission() {
+        boolean allow = false;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            allow = getActivity().getPackageManager().canRequestPackageInstalls();
+        } else {
+            try {
+                allow = Settings.Secure.getInt(getActivity().getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS) == 1;
+            } catch (Settings.SettingNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        return allow;
     }
 
     private void checkPermissionsAndPickFiles() {
@@ -246,7 +270,6 @@ public class Installer2Fragment extends InstallerFragment implements FilePickerD
             else
                 checkPermissionsAndPickFiles();
         }
-
     }
 
     @Override
@@ -362,4 +385,19 @@ public class Installer2Fragment extends InstallerFragment implements FilePickerD
     public void showError(String shortError, String fullError) {
         ErrorLogDialogFragment2.newInstance(getString(R.string.installer_installation_failed), shortError, fullError, false).show(getChildFragmentManager(), "installation_error_dialog");
     }
+
+    @Override
+    public void onDialogDismissed(@NonNull String dialogTag) {
+        Intent intent = new Intent();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setAction(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+        } else {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setAction(Settings.ACTION_SECURITY_SETTINGS);
+        }
+        startActivity(intent);
+    }
 }
+
+

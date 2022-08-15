@@ -23,8 +23,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ProgressBar;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -65,7 +64,6 @@ import java.util.zip.ZipInputStream;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Observer;
-import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
@@ -86,11 +84,10 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
 
     private static final String DIALOG_TAG_Q_SAF_WARNING = "q_saf_warning";
 
-    private ProgressBar mProgressCopy;
+    private LinearLayout mLayoutProgress;
     private ViewSwitcherLayout mLayoutInstall;
 
     private String mPathObb = "";
-    private Button mButton;
     private Disposable mDisposable;
 
     /**
@@ -144,25 +141,11 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             mViewModel.setApkSourceUris(Collections.singletonList(apkSourceUri));
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-        if (checkPermission()) return;
-
-        Intent intent = new Intent();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            intent.setAction(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
-        } else {
-            intent.setAction(Settings.ACTION_SECURITY_SETTINGS);
-        }
-        startActivity(intent);
-    }
-
     @Nullable
     @Override
     protected View onCreateContentView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.dialog_installerx, container, false);
-        mProgressCopy = view.findViewById(R.id.progress_copy);
+        mLayoutProgress = view.findViewById(R.id.layout_progress);
         mLayoutInstall = view.findViewById(R.id.container_dialog_installerx);
         return view;
     }
@@ -191,8 +174,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
 
         view.findViewById(R.id.button_installerx_fp_internal).setOnClickListener(v -> checkPermissionsAndPickFiles());
         view.findViewById(R.id.button_installerx_fp_saf).setOnClickListener(v -> pickFilesWithSaf(false));
-        mButton = view.findViewById(R.id.button_installerx_obb);
-        mButton.setOnClickListener(view1 -> openFileObb());
 
         TextView warningTv = view.findViewById(R.id.tv_installerx_warning);
         mViewModel.getState().observe(this, state -> {
@@ -230,14 +211,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         view.requestFocus(); //TV fix
     }
 
-    /*@Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        if (!PermissionsUtils.checkAndRequestStoragePermissions(this)) {
-            return;
-        }
-    }
-*/
     @Override
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
@@ -269,7 +242,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             }
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (requireContext().checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                // SimpleAlertDialogFragment.newInstance(requireContext(), R.string.warning, R.string.installerx_thank_you_scoped_storage_very_cool).show(getChildFragmentManager(), DIALOG_TAG_Q_SAF_WARNING);
+                 SimpleAlertDialogFragment.newInstance(requireContext(), R.string.warning, R.string.installerx_thank_you_scoped_storage_very_cool).show(getChildFragmentManager(), DIALOG_TAG_Q_SAF_WARNING);
                 return;
             }
         }
@@ -316,11 +289,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 return;
             if (data.getData() != null) {
                 backgroundTask(data.getData());
-              /*  String pathSrc = getPath(data.getData());
-                Path uriDir = unpackZip(pathSrc);
-                String pathObb = uriDir.fileName.replace(mPathObb, "");
-                copyFileOrDirectory(uriDir.pathName, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb);
-              */
                 mViewModel.setApkSourceUris(Collections.singletonList(data.getData()));
                 return;
             }
@@ -346,24 +314,23 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
 
     private void backgroundTask(Uri data) {
         setShowHideProgress(true);
-
         Observable
                 .timer(6, TimeUnit.SECONDS)
-                .subscribeOn(Schedulers.newThread())
+                .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<Long>() {
                     @Override
                     public void onSubscribe(@io.reactivex.rxjava3.annotations.NonNull Disposable d) {
                         mDisposable = d;
+                    }
+
+                    @Override
+                    public void onNext(@io.reactivex.rxjava3.annotations.NonNull Long aLong) {
                         String pathSrc = getPath(data);
                         Path uriDir = unpackZip(pathSrc);
                         String pathObb = uriDir.fileName.replace(mPathObb, "");
                         copyFileOrDirectory(uriDir.pathName, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb);
                         mViewModel.setApkSourceUris(Collections.singletonList(data));
-                    }
-
-                    @Override
-                    public void onNext(@io.reactivex.rxjava3.annotations.NonNull Long aLong) {
                     }
 
                     @Override
@@ -388,10 +355,10 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
 
     private void setShowHideProgress(Boolean isShow) {
         if (!isShow) {
-            mProgressCopy.setVisibility(View.GONE);
+            mLayoutProgress.setVisibility(View.GONE);
             mLayoutInstall.setVisibility(View.VISIBLE);
         } else {
-            mProgressCopy.setVisibility(View.VISIBLE);
+            mLayoutProgress.setVisibility(View.VISIBLE);
             mLayoutInstall.setVisibility(View.GONE);
         }
     }
@@ -417,20 +384,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             intent.putExtra("android.provider.extra.INITIAL_URI", uri);
             startActivityForResult(intent, REQUEST_CODE_GET_FILES_OBB);
         }
-    }
-
-    private boolean checkPermission() {
-        boolean allow = false;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            allow = getActivity().getPackageManager().canRequestPackageInstalls();
-        } else {
-            try {
-                allow = Settings.Secure.getInt(getActivity().getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS) == 1;
-            } catch (Settings.SettingNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
-        return allow;
     }
 
     public static void copyFileOrDirectory(String srcDir, String dstDir) {

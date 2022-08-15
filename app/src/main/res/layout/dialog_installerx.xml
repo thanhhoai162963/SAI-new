@@ -43,13 +43,6 @@
                 android:layout_height="wrap_content"
                 android:text="@string/filepicker_saf" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/button_installerx_obb"
-                style="@style/SAIMaterialButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/set_up_obb"
-                android:visibility="visible" />
         </LinearLayout>
 
         <androidx.recyclerview.widget.RecyclerView
@@ -140,11 +133,32 @@
 
     </com.aefyr.sai.view.ViewSwitcherLayout>
 
-    <ProgressBar
-        android:id="@+id/progress_copy"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+    <LinearLayout
+        android:id="@+id/layout_progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:indeterminateTint="@color/colorTextPrimaryRooter"
-        android:visibility="gone" />
+        android:orientation="vertical"
+        android:visibility="visible">
+
+        <ProgressBar
+            android:id="@+id/progress_copy"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_gravity="center"
+            android:indeterminateTint="#80EA06" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="10dp"
+            android:gravity="center_horizontal"
+            android:maxLines="3"
+            android:text="Hệ thống đang phân tích file Obb, bạn vui lòng chờ 1 chút nhé."
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="13sp" />
+    </LinearLayout>
+
 </FrameLayout>
