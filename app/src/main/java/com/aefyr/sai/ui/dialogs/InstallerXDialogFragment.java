@@ -47,6 +47,8 @@ import com.aefyr.sai.viewmodels.factory.InstallerXDialogViewModelFactory;
 import com.github.angads25.filepicker.model.DialogConfigs;
 import com.github.angads25.filepicker.model.DialogProperties;
 
+import org.apache.commons.io.FileUtils;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -346,6 +348,29 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 });
     }
 
+
+    private Observable<Boolean> createObservable(Uri data) {
+        return Observable.just(copyFileObb(data));
+    }
+
+    private void mutilBackgroundTask(List<Uri> uriList) {
+        if (uriList.size() == 1) {
+            backgroundTask(uriList.get(0));
+        } else {
+        }
+    }
+
+    private static void deleteFolder(File file) {
+        try {
+            if (file.exists()) {
+                FileUtils.deleteDirectory(file);
+            }
+        } catch (Exception e) {
+            e.printStackTrace(System.err);
+        }
+
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -419,6 +444,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             source = new FileInputStream(sourceFile).getChannel();
             destination = new FileOutputStream(destFile).getChannel();
             destination.transferFrom(source, 0, source.size());
+
         } finally {
             if (source != null) {
                 source.close();
@@ -427,6 +453,13 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 destination.close();
             }
         }
+        while (sourceFile.getParentFile() != null) {
+            sourceFile = sourceFile.getParentFile();
+            if (sourceFile.getName().contains(".zip")) {
+                break;
+            }
+        }
+        deleteFolder(sourceFile);
     }
 
     @Override
@@ -469,6 +502,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 filename = ze.getName();
                 fileName1 = filename;
                 pathName = path + filename;
+
                 if (ze.getName().contains("/obb/")) {
                     if (countFileObb == 0) {
                         mPathObb = ze.getName();

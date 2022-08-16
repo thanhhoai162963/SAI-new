@@ -81,6 +81,10 @@ dependencies {
     //rx
     implementation "io.reactivex.rxjava3:rxjava:3.0.0"
     implementation 'io.reactivex.rxjava3:rxandroid:3.0.0'
+
+    //common apache
+    implementation 'org.apache.commons:commons-io:1.3.2'
+
 }
 
 if (getGradle().getStartParameter().getTaskRequests().toString().contains("Normal")){
