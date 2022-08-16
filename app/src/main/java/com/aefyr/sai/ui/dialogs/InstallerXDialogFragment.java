@@ -91,6 +91,8 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
 
     private String mPathObb = "";
     private Disposable mDisposable;
+    private List<Observable<?>> mListObservable = new ArrayList<>();
+
 
     /**
      * Create an instance of InstallerXDialogFragment with given apk source uri and UriHostFactory class.
@@ -348,18 +350,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 });
     }
 
-
-    private Observable<Boolean> createObservable(Uri data) {
-        return Observable.just(copyFileObb(data));
-    }
-
-    private void mutilBackgroundTask(List<Uri> uriList) {
-        if (uriList.size() == 1) {
-            backgroundTask(uriList.get(0));
-        } else {
-        }
-    }
-
     private static void deleteFolder(File file) {
         try {
             if (file.exists()) {
@@ -464,8 +454,54 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
 
     @Override
     public void onFilesSelected(String tag, List<File> files) {
+        if (files.size() == 1) {
+            backgroundTask(Uri.fromFile(files.get(0)));
+        } else if (files.size() > 1) {
+            createListObservable(files);
+        }
+        mutilpleBackgroundTask();
         mViewModel.setApkSourceFiles(files);
     }
+
+    private List<Observable<?>> createListObservable(List<File> files) {
+        for (File f : files) {
+            mListObservable.add(createObservable(Uri.fromFile(f)));
+        }
+        return mListObservable;
+    }
+
+    private Observable<Boolean> createObservable(Uri data) {
+        return Observable.just(copyFileObb(data)).subscribeOn(Schedulers.io());
+    }
+
+    private void mutilpleBackgroundTask() {
+        setShowHideProgress(true);
+        Observable.merge(mListObservable)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<Object>() {
+                    @Override
+                    public void onSubscribe(@io.reactivex.rxjava3.annotations.NonNull Disposable d) {
+                        mDisposable = d;
+                    }
+
+                    @Override
+                    public void onNext(@io.reactivex.rxjava3.annotations.NonNull Object o) {
+
+                    }
+
+                    @Override
+                    public void onError(@io.reactivex.rxjava3.annotations.NonNull Throwable e) {
+                        setShowHideProgress(false);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        setShowHideProgress(false);
+                    }
+                });
+    }
+
 
     @Override
     public void onDialogDismissed(@NonNull String dialogTag) {
