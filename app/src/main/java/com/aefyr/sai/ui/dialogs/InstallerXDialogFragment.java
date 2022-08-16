@@ -47,8 +47,6 @@ import com.aefyr.sai.viewmodels.factory.InstallerXDialogViewModelFactory;
 import com.github.angads25.filepicker.model.DialogConfigs;
 import com.github.angads25.filepicker.model.DialogProperties;
 
-import org.reactivestreams.Subscription;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -59,20 +57,13 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
-import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.FlowableSubscriber;
 import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.ObservableEmitter;
-import io.reactivex.rxjava3.core.ObservableOnSubscribe;
 import io.reactivex.rxjava3.core.Observer;
 import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 @SuppressWarnings("ALL")
@@ -322,7 +313,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         Path uriDir = unpackZip(pathSrc);
         String pathObb = uriDir.fileName.replace(mPathObb, "");
         copyFileOrDirectory(uriDir.pathName, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb);
-        mViewModel.setApkSourceUris(Collections.singletonList(data));
         return true;
     }
 
@@ -351,6 +341,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                     @Override
                     public void onComplete() {
                         setShowHideProgress(false);
+                        mViewModel.setApkSourceUris(Collections.singletonList(data));
                     }
                 });
     }

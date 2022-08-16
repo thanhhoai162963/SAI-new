@@ -24,7 +24,7 @@ import java.io.OutputStream;
 import java.util.Objects;
 
 public class AndroidUriHost implements UriHost {
-    private static final long MAX_FILE_LENGTH_FOR_COPY = 1024 * 1024 * 100;
+    private static final long MAX_FILE_LENGTH_FOR_COPY = 1024 * 1024 * 1000;
 
     private Context mContext;
 
