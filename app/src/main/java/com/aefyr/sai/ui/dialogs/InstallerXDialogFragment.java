@@ -279,7 +279,12 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             if (resultCode != Activity.RESULT_OK || data == null)
                 return;
             if (data.getData() != null) {
-                unzipAndCopy(data.getData());
+                String pathSrc = getPath(data.getData());
+                Path path = unpackZip(pathSrc);
+                String pathObb = path.fileName.replace(mPathObb, "");
+                copyFileOrDirectory(path.pathName, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb);
+
+
                 return;
             }
 
@@ -302,70 +307,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         }
     }
 
-    /*private void unzipAndCopy(Uri data) {
-        setShowHideProgress(true);
-        Observable
-                .just(unzipAndCopy123(data))
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<Boolean>() {
-                    @Override
-                    public void onSubscribe(@io.reactivex.rxjava3.annotations.NonNull Disposable d) {
-                        mDisposable = d;
-                    }
-
-                    @Override
-                    public void onNext(@io.reactivex.rxjava3.annotations.NonNull Boolean aBoolean) {
-
-                    }
-
-                    @Override
-                    public void onError(@io.reactivex.rxjava3.annotations.NonNull Throwable e) {
-                        setShowHideProgress(false);
-                    }
-
-                    @Override
-                    public void onComplete() {
-                        setShowHideProgress(false);
-                        mViewModel.setApkSourceUris(Collections.singletonList(data));
-                    }
-                });
-    }*/
-    private void unzipAndCopy(Uri uriData) {
-        setShowHideProgress(true);
-        String pathSrc = getPath(uriData);
-        Observable.fromCallable(new Callable<Path>() {
-                    @Override
-                    public Path call() throws Exception {
-                        return unpackZip(pathSrc);
-                    }
-                })
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<Path>() {
-                    @Override
-                    public void onSubscribe(@io.reactivex.rxjava3.annotations.NonNull Disposable d) {
-                        mDisposable = d;
-                    }
-
-                    @Override
-                    public void onNext(@io.reactivex.rxjava3.annotations.NonNull Path path) {
-                        String pathObb = path.fileName.replace(mPathObb, "");
-                        copyFileOrDirectory(path.pathName, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb, uriData);
-                    }
-
-                    @Override
-                    public void onError(@io.reactivex.rxjava3.annotations.NonNull Throwable e) {
-                        setShowHideProgress(false);
-                    }
-
-                    @Override
-                    public void onComplete() {
-
-                    }
-                });
-    }
-
     private Path unpackZip(String path) {
         String pathName = "";
         String fileName1 = "";
@@ -384,7 +325,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 filename = ze.getName();
                 fileName1 = filename;
                 pathName = path + filename;
-
                 if (ze.getName().contains("/obb/")) {
                     if (countFileObb == 0) {
                         mPathObb = ze.getName();
@@ -405,52 +345,16 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 fout.close();
                 zis.closeEntry();
             }
-
             zis.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         Path path1 = new Path();
         path1.fileName = fileName1;
         path1.pathName = pathName;
         return path1;
-    }
-
-    public void copyFileOrDirectory(String srcDir, String dstDir, Uri uriData) {
-        setShowHideProgress(true);
-        Observable
-                .fromCallable(new Callable<Boolean>() {
-                    @Override
-                    public Boolean call() throws Exception {
-                        return copyFileOrDirectory(srcDir, dstDir);
-                    }
-                }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<Boolean>() {
-                    @Override
-                    public void onSubscribe(@io.reactivex.rxjava3.annotations.NonNull Disposable d) {
-                        mDisposable = d;
-                    }
-
-                    @Override
-                    public void onNext(@io.reactivex.rxjava3.annotations.NonNull Boolean o) {
-                    }
-
-                    @Override
-                    public void onError(@io.reactivex.rxjava3.annotations.NonNull Throwable e) {
-                        setShowHideProgress(false);
-                    }
-
-                    @Override
-                    public void onComplete() {
-                        setShowHideProgress(false);
-                        mViewModel.setApkSourceUris(Collections.singletonList(uriData));
-                    }
-                });
 
     }
-
     public boolean copyFileOrDirectory(String srcDir, String dstDir) {
         try {
             File src = new File(srcDir);
@@ -506,58 +410,15 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
     @Override
     public void onFilesSelected(String tag, List<File> files) {
         if (files.size() == 1) {
-            unzipAndCopy(Uri.fromFile(files.get(0)));
+            //unzipAndCopy(Uri.fromFile(files.get(0)));
         } else if (files.size() > 1) {
-            createListObservable(files);
+            mutilpleSetupApk(files);
         }
-        mutilpleSetupApk(files);
-    }
-
-    private List<Observable<?>> createListObservable(List<File> files) {
-        for (File f : files) {
-            mListObservable.add(createObservable(Uri.fromFile(f)));
-        }
-        return mListObservable;
-    }
-
-    private Observable<Boolean> createObservable(Uri data) {
-        return Observable.fromCallable(new Callable<Boolean>() {
-            @Override
-            public Boolean call() throws Exception {
-                unzipAndCopy(data);
-                return true;
-            }
-        }).subscribeOn(Schedulers.io());
+        mViewModel.setApkSourceFiles(files);
     }
 
     private void mutilpleSetupApk(List<File> files) {
-        setShowHideProgress(true);
-        Observable.merge(mListObservable)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<Object>() {
-                    @Override
-                    public void onSubscribe(@io.reactivex.rxjava3.annotations.NonNull Disposable d) {
-                        mDisposable = d;
 
-                    }
-
-                    @Override
-                    public void onNext(@io.reactivex.rxjava3.annotations.NonNull Object o) {
-
-                    }
-
-                    @Override
-                    public void onError(@io.reactivex.rxjava3.annotations.NonNull Throwable e) {
-                        setShowHideProgress(false);
-                    }
-
-                    @Override
-                    public void onComplete() {
-                        setShowHideProgress(false);
-                        mViewModel.setApkSourceFiles(files);
-                    }
-                });
     }
 
     private static void deleteFolder(File file) {
