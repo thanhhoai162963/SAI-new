@@ -27,7 +27,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.UiThread;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -58,16 +57,14 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Callable;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.ObservableSource;
 import io.reactivex.rxjava3.core.Observer;
 import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.functions.Function;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 @SuppressWarnings("ALL")
@@ -213,14 +210,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         view.requestFocus(); //TV fix
     }
 
-    @Override
-    public void onDismiss(@NonNull DialogInterface dialog) {
-        super.onDismiss(dialog);
-
-        if (mViewModel.getState().getValue() == InstallerXDialogViewModel.State.LOADING)
-            mViewModel.cancelParsing();
-    }
-
     private void checkPermissionsAndPickFiles() {
         mActionAfterGettingStoragePermissions = PICK_WITH_INTERNAL_FILEPICKER;
 
@@ -291,7 +280,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 return;
             if (data.getData() != null) {
                 unzipAndCopy(data.getData());
-                mViewModel.setApkSourceUris(Collections.singletonList(data.getData()));
                 return;
             }
 
@@ -314,19 +302,10 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         }
     }
 
-    private boolean copyFileObb(Uri data) {
-        String pathSrc = getPath(data);
-        Path file = unpackZip(pathSrc);
-        String pathObb = file.fileName.replace(mPathObb, "");
-        copyFileOrDirectory(file.pathName, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb);
-        return true;
-    }
-
-    private void unzipAndCopy(Uri data) {
+    /*private void unzipAndCopy(Uri data) {
         setShowHideProgress(true);
         Observable
-                .timer(3, TimeUnit.SECONDS)
-                .just(copyFileObb(data))
+                .just(unzipAndCopy123(data))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<Boolean>() {
@@ -351,176 +330,28 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                         mViewModel.setApkSourceUris(Collections.singletonList(data));
                     }
                 });
-    }
-
-    private static void deleteFolder(File file) {
-        try {
-            if (file.exists()) {
-                FileUtils.deleteDirectory(file);
-            }
-        } catch (Exception e) {
-            e.printStackTrace(System.err);
-        }
-
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        if (mDisposable == null) return;
-        mDisposable.dispose();
-    }
-
-    private void setShowHideProgress(Boolean isShow) {
-        if (!isShow) {
-            mLayoutProgress.setVisibility(View.GONE);
-            mLayoutInstall.setVisibility(View.VISIBLE);
-        } else {
-            mLayoutProgress.setVisibility(View.VISIBLE);
-            mLayoutInstall.setVisibility(View.GONE);
-        }
-    }
-
-    /*  public void openFileObb() {
-          StorageManager sm = (StorageManager) getContext().getApplicationContext().getSystemService(Context.STORAGE_SERVICE);
-          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-              Intent intent = sm.getPrimaryStorageVolume().createOpenDocumentTreeIntent();
-              String startDir = "Android/obb";
-
-              Uri uri = intent.getParcelableExtra("android.provider.extra.INITIAL_URI");
-
-              String scheme = uri.toString();
-
-              scheme = scheme.replace("/root/", "/document/");
-
-              startDir = startDir.replace("/", "%2F");
-
-              scheme += "%3A" + startDir;
-
-              uri = Uri.parse(scheme);
-              intent.setAction(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
-              intent.putExtra("android.provider.extra.INITIAL_URI", uri);
-              startActivityForResult(intent, REQUEST_CODE_GET_FILES_OBB);
-          }
-      }
-  */
-    public void copyFileOrDirectory(String srcDir, String dstDir) {
-        Observable.just(true)
-                .flatMap(new Function<Boolean, ObservableSource<?>>() {
-                    @Override
-                    public ObservableSource<?> apply(Boolean aBoolean) throws Throwable {
-                        try {
-                            File src = new File(srcDir);
-                            File dst = new File(dstDir);
-                            if (src.isDirectory()) {
-                                String[] files = src.list();
-                                for (String file : files) {
-                                    String src1 = (new File(src, file).getPath());
-                                    String dst1 = dst.getPath();
-                                    copyFileOrDirectory(src1, dst1);
-                                }
-                            } else {
-                                copyFile(src, dst);
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                        return null;
-                    }
-                }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<Object>() {
-                    @Override
-                    public void onSubscribe(@io.reactivex.rxjava3.annotations.NonNull Disposable d) {
-                        mDisposable = d;
-                    }
-
-                    @Override
-                    public void onNext(@io.reactivex.rxjava3.annotations.NonNull Object o) {
-                    }
-
-                    @Override
-                    public void onError(@io.reactivex.rxjava3.annotations.NonNull Throwable e) {
-
-                    }
-
-                    @Override
-                    public void onComplete() {
-
-                    }
-                });
-
-    }
-
-    public void copyFile(File sourceFile, File destFile) throws IOException {
-        if (!destFile.getParentFile().exists())
-            destFile.getParentFile().mkdirs();
-
-        if (!destFile.exists()) {
-            destFile.createNewFile();
-        }
-
-        FileChannel source = null;
-        FileChannel destination = null;
-        try {
-            source = new FileInputStream(sourceFile).getChannel();
-            destination = new FileOutputStream(destFile).getChannel();
-            destination.transferFrom(source, 0, source.size());
-
-        } finally {
-            if (source != null) {
-                source.close();
-            }
-            if (destination != null) {
-                destination.close();
-            }
-        }
-        while (sourceFile.getParentFile() != null) {
-            sourceFile = sourceFile.getParentFile();
-            if (sourceFile.getName().contains(".zip")) {
-                break;
-            }
-        }
-        deleteFolder(sourceFile);
-    }
-
-    @Override
-    public void onFilesSelected(String tag, List<File> files) {
-        if (files.size() == 1) {
-            unzipAndCopy(Uri.fromFile(files.get(0)));
-        } else if (files.size() > 1) {
-            createListObservable(files);
-        }
-        mutilpleBackgroundTask();
-        mViewModel.setApkSourceFiles(files);
-    }
-
-    private List<Observable<?>> createListObservable(List<File> files) {
-        for (File f : files) {
-            mListObservable.add(createObservable(Uri.fromFile(f)));
-        }
-        return mListObservable;
-    }
-
-    private Observable<Boolean> createObservable(Uri data) {
-        return Observable.just(copyFileObb(data)).subscribeOn(Schedulers.io());
-    }
-
-    private void mutilpleBackgroundTask() {
+    }*/
+    private void unzipAndCopy(Uri uriData) {
         setShowHideProgress(true);
-        Observable.merge(mListObservable)
+        String pathSrc = getPath(uriData);
+        Observable.fromCallable(new Callable<Path>() {
+                    @Override
+                    public Path call() throws Exception {
+                        return unpackZip(pathSrc);
+                    }
+                })
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<Object>() {
+                .subscribe(new Observer<Path>() {
                     @Override
                     public void onSubscribe(@io.reactivex.rxjava3.annotations.NonNull Disposable d) {
                         mDisposable = d;
-
                     }
 
                     @Override
-                    public void onNext(@io.reactivex.rxjava3.annotations.NonNull Object o) {
-
+                    public void onNext(@io.reactivex.rxjava3.annotations.NonNull Path path) {
+                        String pathObb = path.fileName.replace(mPathObb, "");
+                        copyFileOrDirectory(path.pathName, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb, uriData);
                     }
 
                     @Override
@@ -530,27 +361,9 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
 
                     @Override
                     public void onComplete() {
-                        setShowHideProgress(false);
+
                     }
                 });
-    }
-
-
-    @Override
-    public void onDialogDismissed(@NonNull String dialogTag) {
-        switch (dialogTag) {
-            case DIALOG_TAG_Q_SAF_WARNING:
-                mActionAfterGettingStoragePermissions = PICK_WITH_SAF;
-                if (PermissionsUtils.checkAndRequestStoragePermissions(this)) {
-                    pickFilesWithSaf(false);
-                }
-                break;
-        }
-    }
-
-    class Path {
-        String fileName = null;
-        String pathName = null;
     }
 
     private Path unpackZip(String path) {
@@ -604,6 +417,187 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         return path1;
     }
 
+    public void copyFileOrDirectory(String srcDir, String dstDir, Uri uriData) {
+        setShowHideProgress(true);
+        Observable
+                .fromCallable(new Callable<Boolean>() {
+                    @Override
+                    public Boolean call() throws Exception {
+                        return copyFileOrDirectory(srcDir, dstDir);
+                    }
+                }).subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<Boolean>() {
+                    @Override
+                    public void onSubscribe(@io.reactivex.rxjava3.annotations.NonNull Disposable d) {
+                        mDisposable = d;
+                    }
+
+                    @Override
+                    public void onNext(@io.reactivex.rxjava3.annotations.NonNull Boolean o) {
+                    }
+
+                    @Override
+                    public void onError(@io.reactivex.rxjava3.annotations.NonNull Throwable e) {
+                        setShowHideProgress(false);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        setShowHideProgress(false);
+                        mViewModel.setApkSourceUris(Collections.singletonList(uriData));
+                    }
+                });
+
+    }
+
+    public boolean copyFileOrDirectory(String srcDir, String dstDir) {
+        try {
+            File src = new File(srcDir);
+            File dst = new File(dstDir);
+            if (src.isDirectory()) {
+                String[] files = src.list();
+                for (String file : files) {
+                    String src1 = (new File(src, file).getPath());
+                    String dst1 = dst.getPath();
+                    copyFileOrDirectory(src1, dst1);
+                }
+            } else {
+                copyFile(src, dst);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+
+    public void copyFile(File sourceFile, File destFile) throws IOException {
+        if (!destFile.getParentFile().exists())
+            destFile.getParentFile().mkdirs();
+
+        if (!destFile.exists()) {
+            destFile.createNewFile();
+        }
+
+        FileChannel source = null;
+        FileChannel destination = null;
+        try {
+            source = new FileInputStream(sourceFile).getChannel();
+            destination = new FileOutputStream(destFile).getChannel();
+            destination.transferFrom(source, 0, source.size());
+
+        } finally {
+            if (source != null) {
+                source.close();
+            }
+            if (destination != null) {
+                destination.close();
+            }
+        }
+        while (sourceFile.getParentFile() != null) {
+            sourceFile = sourceFile.getParentFile();
+            if (sourceFile.getName().contains(".zip")) {
+                break;
+            }
+        }
+        deleteFolder(sourceFile);
+    }
+
+    @Override
+    public void onFilesSelected(String tag, List<File> files) {
+        if (files.size() == 1) {
+            unzipAndCopy(Uri.fromFile(files.get(0)));
+        } else if (files.size() > 1) {
+            createListObservable(files);
+        }
+        mutilpleSetupApk(files);
+    }
+
+    private List<Observable<?>> createListObservable(List<File> files) {
+        for (File f : files) {
+            mListObservable.add(createObservable(Uri.fromFile(f)));
+        }
+        return mListObservable;
+    }
+
+    private Observable<Boolean> createObservable(Uri data) {
+        return Observable.fromCallable(new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                unzipAndCopy(data);
+                return true;
+            }
+        }).subscribeOn(Schedulers.io());
+    }
+
+    private void mutilpleSetupApk(List<File> files) {
+        setShowHideProgress(true);
+        Observable.merge(mListObservable)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<Object>() {
+                    @Override
+                    public void onSubscribe(@io.reactivex.rxjava3.annotations.NonNull Disposable d) {
+                        mDisposable = d;
+
+                    }
+
+                    @Override
+                    public void onNext(@io.reactivex.rxjava3.annotations.NonNull Object o) {
+
+                    }
+
+                    @Override
+                    public void onError(@io.reactivex.rxjava3.annotations.NonNull Throwable e) {
+                        setShowHideProgress(false);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        setShowHideProgress(false);
+                        mViewModel.setApkSourceFiles(files);
+                    }
+                });
+    }
+
+    private static void deleteFolder(File file) {
+        try {
+            if (file.exists()) {
+                FileUtils.deleteDirectory(file);
+            }
+        } catch (Exception e) {
+            e.printStackTrace(System.err);
+        }
+
+    }
+
+    private void setShowHideProgress(Boolean isShow) {
+        if (!isShow) {
+            mLayoutProgress.setVisibility(View.GONE);
+            mLayoutInstall.setVisibility(View.VISIBLE);
+        } else {
+            mLayoutProgress.setVisibility(View.VISIBLE);
+            mLayoutInstall.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    public void onDialogDismissed(@NonNull String dialogTag) {
+        switch (dialogTag) {
+            case DIALOG_TAG_Q_SAF_WARNING:
+                mActionAfterGettingStoragePermissions = PICK_WITH_SAF;
+                if (PermissionsUtils.checkAndRequestStoragePermissions(this)) {
+                    pickFilesWithSaf(false);
+                }
+                break;
+        }
+    }
+
+    class Path {
+        String fileName = null;
+        String pathName = null;
+    }
+
     public static String getPathObb(final Context context, final Uri uri) {
 
         final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
@@ -620,7 +614,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                     return Environment.getExternalStorageDirectory() + "/" + split[1];
                 }
 
-                // TODO handle non-primary volumes
             }
             // DownloadsProvider
             else if (isDownloadsDocument(uri)) {
@@ -944,6 +937,20 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         return null;
     }
 
+    @Override
+    public void onDismiss(@NonNull DialogInterface dialog) {
+        super.onDismiss(dialog);
+        if (mViewModel.getState().getValue() == InstallerXDialogViewModel.State.LOADING)
+            mViewModel.cancelParsing();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (mDisposable == null) return;
+        mDisposable.dispose();
+    }
+
     private static boolean isExternalStorageDocument(Uri uri) {
         return "com.android.externalstorage.documents".equals(uri.getAuthority());
     }
@@ -959,5 +966,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
     private boolean isGooglePhotosUri(Uri uri) {
         return "com.google.android.apps.photos.content".equals(uri.getAuthority());
     }
-
 }
+
+
