@@ -87,6 +87,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
     private Uri mUriApk;
     private List<File> mListFileApk;
     private boolean mMultilpleSetupApk;
+    private int mCountApk = 0;
 
 
     /**
@@ -356,6 +357,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             zis.close();
         } catch (IOException e) {
             e.printStackTrace();
+            return;
         }
         String pathObb = fileName1.replace(fileNameObb, "");
         copyFileOrDirectory(pathName, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb);
@@ -430,6 +432,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
     }
 
     private void deleteFolder(File file) {
+        mCountApk++;
         try {
             if (file.exists()) {
                 FileUtils.deleteDirectory(file);
@@ -437,8 +440,11 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                     setShowHideProgress(false);
                     if (!mMultilpleSetupApk) {
                         mViewModel.setApkSourceUris(Collections.singletonList(mUriApk));
-                    } else {
+                    } else if (mCountApk >= 2) {
+                        setShowHideProgress(false);
                         mViewModel.setApkSourceFiles(mListFileApk);
+                    } else if (mCountApk < 2) {
+                        setShowHideProgress(true);
                     }
                 });
             }
