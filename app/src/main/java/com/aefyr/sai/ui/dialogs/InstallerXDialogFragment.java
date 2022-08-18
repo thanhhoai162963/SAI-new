@@ -319,6 +319,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         String pathName = "";
         String fileName1 = "";
         String fileNameObb = "";
+        String fileNameData = "";
         InputStream is;
         ZipInputStream zis;
         try {
@@ -329,6 +330,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             byte[] buffer = new byte[1024];
             int count;
             int countFileObb = 0;
+            int countFileData = 0;
 
             while ((ze = zis.getNextEntry()) != null) {
                 filename = ze.getName();
@@ -340,6 +342,14 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                     }
                     countFileObb++;
                 }
+
+                if (ze.getName().contains("/data/")) {
+                    if (countFileData == 0) {
+                        fileNameData = ze.getName();
+                    }
+                    countFileData++;
+                }
+
                 if (ze.isDirectory()) {
                     File fmd = new File(pathName);
                     fmd.mkdirs();
@@ -360,10 +370,12 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             return;
         }
         String pathObb = fileName1.replace(fileNameObb, "");
-        copyFileOrDirectory(pathName, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb);
+        String pathData = fileName1.replace(fileNameData, "");
+        String pathRoot = Environment.getExternalStorageDirectory().getPath();
+        copyFileOrDirectory(pathName, pathRoot + "/Android/obb/" + pathObb/*, pathRoot + "/Android/data/" + pathData*/);
     }
 
-    public void copyFileOrDirectory(String srcDir, String dstDir) {
+    public void copyFileOrDirectory(String srcDir, String dstDir/*, String dataDir*/) {
         try {
             File src = new File(srcDir);
             File dst = new File(dstDir);
@@ -700,7 +712,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
 
     private boolean fileExists(String filePath) {
         File file = new File(filePath);
-
         return file.exists();
     }
 
