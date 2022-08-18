@@ -57,15 +57,10 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.Observer;
-import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.schedulers.Schedulers;
 
 @SuppressWarnings("ALL")
 public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment implements FilePickerDialogFragment.OnFilesSelectedListener, SimpleAlertDialogFragment.OnDismissListener {
@@ -88,9 +83,10 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
     private LinearLayout mLayoutProgress;
     private ViewSwitcherLayout mLayoutInstall;
 
-    private String mPathObb = "";
-    private Disposable mDisposable;
     private List<Observable<?>> mListObservable = new ArrayList<>();
+    private Uri mUriApk;
+    private List<File> mListFileApk;
+    private boolean mMultilpleSetupApk;
 
 
     /**
@@ -211,6 +207,8 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
     }
 
     private void checkPermissionsAndPickFiles() {
+        mMultilpleSetupApk = true;
+
         mActionAfterGettingStoragePermissions = PICK_WITH_INTERNAL_FILEPICKER;
 
         DialogProperties properties = new DialogProperties();
@@ -279,12 +277,10 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             if (resultCode != Activity.RESULT_OK || data == null)
                 return;
             if (data.getData() != null) {
-                String pathSrc = getPath(data.getData());
-                Path path = unpackZip(pathSrc);
-                String pathObb = path.fileName.replace(mPathObb, "");
-                copyFileOrDirectory(path.pathName, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb);
-
-
+                mMultilpleSetupApk = false;
+                setShowHideProgress(true);
+                unzipAndCopy(data.getData());
+                mUriApk = data.getData();
                 return;
             }
 
@@ -305,11 +301,23 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 getContext().getApplicationContext().getContentResolver().takePersistableUriPermission(data.getData(), takeFlags);
             }
         }
+
     }
 
-    private Path unpackZip(String path) {
+    private void unzipAndCopy(Uri data) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String pathSrc = getPath(data);
+                unpackZipAndCopy(pathSrc);
+            }
+        }).start();
+    }
+
+    private void unpackZipAndCopy(String path) {
         String pathName = "";
         String fileName1 = "";
+        String fileNameObb = "";
         InputStream is;
         ZipInputStream zis;
         try {
@@ -327,7 +335,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 pathName = path + filename;
                 if (ze.getName().contains("/obb/")) {
                     if (countFileObb == 0) {
-                        mPathObb = ze.getName();
+                        fileNameObb = ze.getName();
                     }
                     countFileObb++;
                 }
@@ -349,13 +357,11 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Path path1 = new Path();
-        path1.fileName = fileName1;
-        path1.pathName = pathName;
-        return path1;
-
+        String pathObb = fileName1.replace(fileNameObb, "");
+        copyFileOrDirectory(pathName, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb);
     }
-    public boolean copyFileOrDirectory(String srcDir, String dstDir) {
+
+    public void copyFileOrDirectory(String srcDir, String dstDir) {
         try {
             File src = new File(srcDir);
             File dst = new File(dstDir);
@@ -372,7 +378,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return true;
     }
 
     public void copyFile(File sourceFile, File destFile) throws IOException {
@@ -409,22 +414,33 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
 
     @Override
     public void onFilesSelected(String tag, List<File> files) {
+        setShowHideProgress(true);
         if (files.size() == 1) {
-            //unzipAndCopy(Uri.fromFile(files.get(0)));
+            unzipAndCopy(Uri.fromFile(files.get(0)));
         } else if (files.size() > 1) {
+            mListFileApk = files;
             mutilpleSetupApk(files);
         }
-        mViewModel.setApkSourceFiles(files);
     }
 
     private void mutilpleSetupApk(List<File> files) {
-
+        for (int i = 0; i < files.size(); i++) {
+            unzipAndCopy(Uri.fromFile(files.get(i)));
+        }
     }
 
-    private static void deleteFolder(File file) {
+    private void deleteFolder(File file) {
         try {
             if (file.exists()) {
                 FileUtils.deleteDirectory(file);
+                requireActivity().runOnUiThread(() -> {
+                    setShowHideProgress(false);
+                    if (!mMultilpleSetupApk) {
+                        mViewModel.setApkSourceUris(Collections.singletonList(mUriApk));
+                    } else {
+                        mViewModel.setApkSourceFiles(mListFileApk);
+                    }
+                });
             }
         } catch (Exception e) {
             e.printStackTrace(System.err);
@@ -452,11 +468,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 }
                 break;
         }
-    }
-
-    class Path {
-        String fileName = null;
-        String pathName = null;
     }
 
     public static String getPathObb(final Context context, final Uri uri) {
@@ -805,13 +816,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             mViewModel.cancelParsing();
     }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        if (mDisposable == null) return;
-        mDisposable.dispose();
-    }
-
     private static boolean isExternalStorageDocument(Uri uri) {
         return "com.android.externalstorage.documents".equals(uri.getAuthority());
     }
@@ -827,6 +831,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
     private boolean isGooglePhotosUri(Uri uri) {
         return "com.google.android.apps.photos.content".equals(uri.getAuthority());
     }
-}
 
+}
 
