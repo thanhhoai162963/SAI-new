@@ -141,12 +141,16 @@
         android:orientation="vertical"
         android:visibility="gone">
 
-        <ProgressBar
+        <com.airbnb.lottie.LottieAnimationView
             android:id="@+id/progress_copy"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:layout_gravity="center"
-            android:indeterminateTint="#80EA06" />
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_gravity="center_horizontal"
+            android:visibility="visible"
+            app:lottie_autoPlay="true"
+            app:lottie_colorFilter="@color/colorAccentFDroidDark"
+            app:lottie_loop="true"
+            app:lottie_rawRes="@raw/progress_bar_new" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -156,7 +160,7 @@
             android:layout_marginTop="10dp"
             android:gravity="center_horizontal"
             android:maxLines="3"
-            android:text="Hệ thống đang phân tích file Obb, bạn vui lòng chờ 1 chút nhé."
+            android:text="Hệ thống đang phân tích file, bạn vui lòng chờ 1 chút nhé."
             android:textColor="?android:attr/textColorPrimary"
             android:textSize="13sp" />
     </LinearLayout>

@@ -76,6 +76,7 @@ public class Installer2Fragment extends InstallerFragment implements FilePickerD
         mHelper = PreferencesHelper.getInstance(getContext());
     }
 
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);

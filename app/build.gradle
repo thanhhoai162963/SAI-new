@@ -84,6 +84,8 @@ dependencies {
 
     //common apache
     implementation 'org.apache.commons:commons-io:1.3.2'
+    //lottie
+    implementation "com.airbnb.android:lottie:3.4.0"
 
 }
 

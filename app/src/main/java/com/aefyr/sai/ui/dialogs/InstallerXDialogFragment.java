@@ -22,6 +22,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -88,6 +89,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
     private List<File> mListFileApk;
     private boolean mMultilpleSetupApk;
     private int mCountApk = 0;
+    private boolean mDelete = false;
 
 
     /**
@@ -107,6 +109,13 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         fragment.setArguments(args);
 
         return fragment;
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        getDialog().setCanceledOnTouchOutside(true);
+
     }
 
     @Override
@@ -145,6 +154,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         mLayoutInstall = view.findViewById(R.id.container_dialog_installerx);
         return view;
     }
+
 
     @Override
     protected void onContentViewCreated(View view, @Nullable Bundle savedInstanceState) {
@@ -317,9 +327,15 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
 
     private void unpackZipAndCopy(String path) {
         String pathName = "";
+        String pathNameObb = "";
         String fileName1 = "";
+        String parentFileNameObb = "";
         String fileNameObb = "";
+        String parentFileNameData = "";
         String fileNameData = "";
+        int countFile = 0;
+
+        List<String> listPathFileData = new ArrayList<>();
         InputStream is;
         ZipInputStream zis;
         try {
@@ -336,16 +352,27 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 filename = ze.getName();
                 fileName1 = filename;
                 pathName = path + filename;
+
                 if (ze.getName().contains("/obb/")) {
                     if (countFileObb == 0) {
-                        fileNameObb = ze.getName();
+                        parentFileNameObb = ze.getName();
                     }
                     countFileObb++;
                 }
 
+                if (ze.getName().contains(".obb")) {
+                    countFile++;
+                    fileNameObb = ze.getName();
+                    pathNameObb = path + fileNameObb;
+                }
+
                 if (ze.getName().contains("/data/")) {
+                    countFile++;
                     if (countFileData == 0) {
-                        fileNameData = ze.getName();
+                        parentFileNameData = ze.getName();
+                    } else if (countFileData >= 2) {
+                        fileNameData = path + ze.getName();
+                        listPathFileData.add(path + ze.getName());
                     }
                     countFileData++;
                 }
@@ -355,8 +382,9 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                     fmd.mkdirs();
                     continue;
                 }
+
                 FileOutputStream fout = new FileOutputStream(pathName);
-                if (ze.getName().contains(".obb")) {
+                if (ze.getName().contains(".obb") || ze.getName().contains("/data/")) {
                     while ((count = zis.read(buffer)) != -1) {
                         fout.write(buffer, 0, count);
                     }
@@ -369,13 +397,27 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             e.printStackTrace();
             return;
         }
-        String pathObb = fileName1.replace(fileNameObb, "");
-        String pathData = fileName1.replace(fileNameData, "");
         String pathRoot = Environment.getExternalStorageDirectory().getPath();
-        copyFileOrDirectory(pathName, pathRoot + "/Android/obb/" + pathObb/*, pathRoot + "/Android/data/" + pathData*/);
+        String pathObb = fileNameObb.replace(parentFileNameObb, "");
+
+        String pathData = fileName1.replace(parentFileNameData, "");
+        if (!fileName1.contains("/data/")) {
+            copyFileOrDirectory(pathNameObb, pathRoot + "/Android/obb/" + pathObb, true);
+        } else {
+            copyFileOrDirectory(pathNameObb, pathRoot + "/Android/obb/" + pathObb, false);
+            for (int p = 0; p < listPathFileData.size(); p++) {
+                String demo = listPathFileData.get(p).replace(path + parentFileNameData, "");
+                if (p == listPathFileData.size() - 1) {
+                    mDelete = true;
+                }
+                copyFileOrDirectory(listPathFileData.get(p), pathRoot + "/Android/data/" + demo, mDelete);
+            }
+        }
+
+
     }
 
-    public void copyFileOrDirectory(String srcDir, String dstDir/*, String dataDir*/) {
+    public void copyFileOrDirectory(String srcDir, String dstDir, boolean delete) {
         try {
             File src = new File(srcDir);
             File dst = new File(dstDir);
@@ -384,17 +426,17 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 for (String file : files) {
                     String src1 = (new File(src, file).getPath());
                     String dst1 = dst.getPath();
-                    copyFileOrDirectory(src1, dst1);
+                    copyFileOrDirectory(src1, dst1, delete);
                 }
             } else {
-                copyFile(src, dst);
+                copyFile(src, dst, delete);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void copyFile(File sourceFile, File destFile) throws IOException {
+    public void copyFile(File sourceFile, File destFile, boolean delete) throws IOException {
         if (!destFile.getParentFile().exists())
             destFile.getParentFile().mkdirs();
 
@@ -423,7 +465,9 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 break;
             }
         }
-        deleteFolder(sourceFile);
+        if (delete == true) {
+            deleteFolder(sourceFile);
+        }
     }
 
     @Override
