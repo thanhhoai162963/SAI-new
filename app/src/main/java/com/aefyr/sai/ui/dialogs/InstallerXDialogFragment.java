@@ -14,6 +14,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.storage.StorageManager;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
@@ -283,7 +284,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == REQUEST_CODE_GET_FILES) {
+        if (requestCode == REQUEST_CODE_GET_FILES && resultCode == Activity.RESULT_OK) {
             if (resultCode != Activity.RESULT_OK || data == null)
                 return;
             if (data.getData() != null) {
@@ -331,7 +332,9 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
     private void unpackZipAndCopy123(String path) {
         String pathName = "";
         String fileName1 = "";
-        String fileNameObb = "";
+        String parentFileNameObb = "";
+        String fileNameObb1 = "";
+        String fileNameObb2 = "";
         InputStream is;
         ZipInputStream zis;
         try {
@@ -349,9 +352,13 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 pathName = path + filename;
                 if (ze.getName().contains("/obb/")) {
                     if (countFileObb == 0) {
-                        fileNameObb = ze.getName();
+                        parentFileNameObb = ze.getName();
                     }
                     countFileObb++;
+                }
+                if (ze.getName().contains(".obb")) {
+                    fileNameObb1 = ze.getName();
+                    fileNameObb2 = path + ze.getName();
                 }
                 if (ze.isDirectory()) {
                     File fmd = new File(pathName);
@@ -376,8 +383,8 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             e.printStackTrace();
             return;
         }
-        String pathObb = fileName1.replace(fileNameObb, "");
-       copyFileOrDirectory(pathName, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb, true);
+        String pathObb = fileNameObb1.replace(parentFileNameObb, "");
+        copyNew(fileNameObb2, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb, true);
     }
 
     private void unpackZipAndCopy(String path) {
@@ -449,30 +456,31 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             }
             zis.close();
         } catch (IOException e) {
+            requireActivity().runOnUiThread(() -> {
+                setShowHideProgress(false);
+                Toast.makeText(getContext(), "tttt", Toast.LENGTH_SHORT).show();
+            });
             e.printStackTrace();
             return;
         }
-        String pathRoot = Environment.getExternalStorageDirectory().getPath();
         String pathObb = fileNameObb.replace(parentFileNameObb, "");
 
         String pathData = fileName1.replace(parentFileNameData, "");
         if (!fileName1.contains("/data/")) {
-            copyFileOrDirectory(pathNameObb, pathRoot + "/Android/obb/" + pathObb, true);
+            copyFileOrDirectory(pathNameObb, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb, true);
         } else {
-            copyFileOrDirectory(pathNameObb, pathRoot + "/Android/obb/" + pathObb, false);
+            copyFileOrDirectory(pathNameObb, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb, false);
             for (int p = 0; p < listPathFileData.size(); p++) {
                 String demo = listPathFileData.get(p).replace(path + parentFileNameData, "");
                 if (p == listPathFileData.size() - 1) {
                     mDelete = true;
                 }
-                copyFileOrDirectory(listPathFileData.get(p), pathRoot + "/Android/data/" + demo, mDelete);
+                copyFileOrDirectory(listPathFileData.get(p), Environment.getExternalStorageDirectory().getPath() + "/Android/data/" + demo, mDelete);
             }
         }
-
-
     }
 
-    public void copyFileOrDirectory(String srcDir, String dstDir, boolean delete) {
+    public synchronized void copyFileOrDirectory(String srcDir, String dstDir, boolean delete) {
         try {
             File src = new File(srcDir);
             File dst = new File(dstDir);
@@ -495,13 +503,25 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         }
     }
 
+    private void copyNew(String srcDir, String dstDir, boolean delete) {
+        File src = new File(srcDir);
+        File dst = new File(dstDir);
+        try {
+            FileUtils.copyFile(src, dst);
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(getContext(), "12312", Toast.LENGTH_SHORT).show();
+        }
+        if (delete == true) {
+            deleteFolder(src);
+        }
+    }
+
     public synchronized void copyFile(File sourceFile, File destFile, boolean delete) throws IOException {
         if (!destFile.getParentFile().exists())
             destFile.getParentFile().mkdirs();
 
         if (!destFile.exists()) {
-            destFile.canRead();
-            destFile.canWrite();
             destFile.createNewFile();
         }
 
@@ -512,12 +532,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             destination = new FileOutputStream(destFile).getChannel();
             destination.transferFrom(source, 0, source.size());
 
-        } catch (Exception e) {
-            requireActivity().runOnUiThread(() -> {
-                setShowHideProgress(false);
-            });
-            e.printStackTrace();
-            return;
         } finally {
             if (source != null) {
                 source.close();
@@ -558,7 +572,8 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         mCountApk++;
         try {
             if (file.exists()) {
-                FileUtils.deleteDirectory(file);
+                FileUtils.forceDelete(file);
+                FileUtils.deleteDirectory(file.getParentFile() + "/");
                 requireActivity().runOnUiThread(() -> {
                     setShowHideProgress(false);
                     if (!mMultilpleSetupApk) {
@@ -573,6 +588,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             }
         } catch (Exception e) {
             e.printStackTrace(System.err);
+
         }
 
     }
