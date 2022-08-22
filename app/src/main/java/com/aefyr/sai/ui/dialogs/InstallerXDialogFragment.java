@@ -572,8 +572,10 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         mCountApk++;
         try {
             if (file.exists()) {
-                FileUtils.forceDelete(file);
-                FileUtils.deleteDirectory(file.getParentFile() + "/");
+                while (file.getParentFile() != null){
+                    FileUtils.forceDelete(file);
+                }
+                //FileUtils.deleteDirectory(file.getParentFile() + "/");
                 requireActivity().runOnUiThread(() -> {
                     setShowHideProgress(false);
                     if (!mMultilpleSetupApk) {
