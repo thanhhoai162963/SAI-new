@@ -22,7 +22,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -320,9 +319,65 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             @Override
             public void run() {
                 String pathSrc = getPath(data);
-                unpackZipAndCopy(pathSrc);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    unpackZipAndCopy123(pathSrc);
+                } else {
+                    unpackZipAndCopy(pathSrc);
+                }
             }
         }).start();
+    }
+
+    private void unpackZipAndCopy123(String path) {
+        String pathName = "";
+        String fileName1 = "";
+        String fileNameObb = "";
+        InputStream is;
+        ZipInputStream zis;
+        try {
+            String filename;
+            is = new FileInputStream(path);
+            zis = new ZipInputStream(new BufferedInputStream(is));
+            ZipEntry ze;
+            byte[] buffer = new byte[1024];
+            int count;
+            int countFileObb = 0;
+
+            while ((ze = zis.getNextEntry()) != null) {
+                filename = ze.getName();
+                fileName1 = filename;
+                pathName = path + filename;
+                if (ze.getName().contains("/obb/")) {
+                    if (countFileObb == 0) {
+                        fileNameObb = ze.getName();
+                    }
+                    countFileObb++;
+                }
+                if (ze.isDirectory()) {
+                    File fmd = new File(pathName);
+                    fmd.mkdirs();
+                    continue;
+                }
+                FileOutputStream fout = new FileOutputStream(pathName);
+                if (ze.getName().contains(".obb")) {
+                    while ((count = zis.read(buffer)) != -1) {
+                        fout.write(buffer, 0, count);
+                    }
+                }
+                fout.close();
+                zis.closeEntry();
+            }
+            zis.close();
+        } catch (IOException e) {
+            requireActivity().runOnUiThread(() -> {
+                setShowHideProgress(false);
+                Toast.makeText(getContext(), "12321", Toast.LENGTH_SHORT).show();
+            });
+            e.printStackTrace();
+            return;
+        }
+        String pathObb = fileName1.replace(fileNameObb, "");
+       copyFileOrDirectory(pathName, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb, true);
     }
 
     private void unpackZipAndCopy(String path) {
@@ -432,15 +487,21 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 copyFile(src, dst, delete);
             }
         } catch (Exception e) {
+            requireActivity().runOnUiThread(() -> {
+                setShowHideProgress(false);
+            });
             e.printStackTrace();
+            return;
         }
     }
 
-    public void copyFile(File sourceFile, File destFile, boolean delete) throws IOException {
+    public synchronized void copyFile(File sourceFile, File destFile, boolean delete) throws IOException {
         if (!destFile.getParentFile().exists())
             destFile.getParentFile().mkdirs();
 
         if (!destFile.exists()) {
+            destFile.canRead();
+            destFile.canWrite();
             destFile.createNewFile();
         }
 
@@ -451,6 +512,12 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             destination = new FileOutputStream(destFile).getChannel();
             destination.transferFrom(source, 0, source.size());
 
+        } catch (Exception e) {
+            requireActivity().runOnUiThread(() -> {
+                setShowHideProgress(false);
+            });
+            e.printStackTrace();
+            return;
         } finally {
             if (source != null) {
                 source.close();
