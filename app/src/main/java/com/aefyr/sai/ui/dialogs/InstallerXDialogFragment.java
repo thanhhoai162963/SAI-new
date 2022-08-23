@@ -390,13 +390,13 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         } catch (IOException e) {
             requireActivity().runOnUiThread(() -> {
                 setShowHideProgress(false);
-                Toast.makeText(getContext(), "12321", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Unzip file không thành công", Toast.LENGTH_SHORT).show();
             });
             e.printStackTrace();
             return;
         }
         String pathObb = fileNameObb1.replace(parentFileNameObb, "");
-        copyNew(pathNameObb, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb, pathNameZip, true);
+        copyAboveAndroidQ(pathNameObb, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb, pathNameZip, true);
     }
 
     private void unpackZipAndCopy(String path) {
@@ -515,7 +515,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         }
     }
 
-    private void copyNew(String srcDir, String dstDir, String pathZip, boolean delete) {
+    private void copyAboveAndroidQ(String srcDir, String dstDir, String pathZip, boolean delete) {
         File src = new File(srcDir);
         File dst = new File(dstDir);
         File zip = new File(pathZip);
@@ -600,7 +600,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             }
         } catch (Exception e) {
             requireActivity().runOnUiThread(() -> {
-                Toast.makeText(getContext(), "Delete file khong thanh cong", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Delete file không thành công", Toast.LENGTH_SHORT).show();
             });
             e.printStackTrace(System.err);
 
