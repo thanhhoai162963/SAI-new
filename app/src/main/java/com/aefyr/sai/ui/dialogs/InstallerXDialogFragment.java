@@ -27,6 +27,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -247,6 +248,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         }
 
         Intent getContentIntent = new Intent(Intent.ACTION_GET_CONTENT);
+
         getContentIntent.setType("*/*");
         getContentIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         getContentIntent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
@@ -287,11 +289,13 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             if (resultCode != Activity.RESULT_OK || data == null)
                 return;
             if (data.getData() != null) {
-                mMultilpleSetupApk = false;
                 setShowHideProgress(true);
-                if (data.getData().getPath().contains(".zip")) {
+                mUriApk = data.getData();
+                mMultilpleSetupApk = false;
+                String pathSrc = getPath(data.getData()); // required android 12
+                if (pathSrc.contains(".zip")) {
                     unzipAndCopy(data.getData());
-                } else if (data.getData().getPath().contains(".apk")) {
+                } else if (pathSrc.contains(".apk")) {
                     setShowHideProgress(false);
                     try {
                         mViewModel.setApkSourceUris(Collections.singletonList(data.getData()));
@@ -299,7 +303,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                         Toast.makeText(getContext(), "File apk có thể bị hỏng!", Toast.LENGTH_SHORT).show();
                     }
                 }
-                mUriApk = data.getData();
                 return;
             }
 
@@ -602,6 +605,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             }
         } catch (Exception e) {
             requireActivity().runOnUiThread(() -> {
+                setShowHideProgress(false);
                 Toast.makeText(getContext(), "Delete file không thành công", Toast.LENGTH_SHORT).show();
             });
             e.printStackTrace(System.err);
