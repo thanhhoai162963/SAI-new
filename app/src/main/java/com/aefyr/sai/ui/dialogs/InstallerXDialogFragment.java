@@ -14,7 +14,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.storage.StorageManager;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
@@ -290,7 +289,16 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             if (data.getData() != null) {
                 mMultilpleSetupApk = false;
                 setShowHideProgress(true);
-                unzipAndCopy(data.getData());
+                if (data.getData().getPath().contains(".zip")) {
+                    unzipAndCopy(data.getData());
+                } else if (data.getData().getPath().contains(".apk")) {
+                    setShowHideProgress(false);
+                    try {
+                        mViewModel.setApkSourceUris(Collections.singletonList(data.getData()));
+                    } catch (Exception e) {
+                        Toast.makeText(getContext(), "File apk có thể bị hỏng!", Toast.LENGTH_SHORT).show();
+                    }
+                }
                 mUriApk = data.getData();
                 return;
             }
@@ -321,7 +329,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             public void run() {
                 String pathSrc = getPath(data);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    unpackZipAndCopy123(pathSrc);
+                    unpackZipAndCopyAboveAndroidQ(pathSrc);
                 } else {
                     unpackZipAndCopy(pathSrc);
                 }
@@ -329,12 +337,12 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         }).start();
     }
 
-    private void unpackZipAndCopy123(String path) {
+    private void unpackZipAndCopyAboveAndroidQ(String path) {
         String pathName = "";
-        String fileName1 = "";
         String parentFileNameObb = "";
         String fileNameObb1 = "";
-        String fileNameObb2 = "";
+        String pathNameObb = "";
+        String pathNameZip = "";
         InputStream is;
         ZipInputStream zis;
         try {
@@ -345,11 +353,15 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             byte[] buffer = new byte[1024];
             int count;
             int countFileObb = 0;
+            int countFileZip = 0;
 
             while ((ze = zis.getNextEntry()) != null) {
                 filename = ze.getName();
-                fileName1 = filename;
                 pathName = path + filename;
+                if (countFileZip == 0) {
+                    pathNameZip = path + filename;
+                    countFileZip++;
+                }
                 if (ze.getName().contains("/obb/")) {
                     if (countFileObb == 0) {
                         parentFileNameObb = ze.getName();
@@ -358,7 +370,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 }
                 if (ze.getName().contains(".obb")) {
                     fileNameObb1 = ze.getName();
-                    fileNameObb2 = path + ze.getName();
+                    pathNameObb = path + ze.getName();
                 }
                 if (ze.isDirectory()) {
                     File fmd = new File(pathName);
@@ -384,7 +396,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             return;
         }
         String pathObb = fileNameObb1.replace(parentFileNameObb, "");
-        copyNew(fileNameObb2, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb, true);
+        copyNew(pathNameObb, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb, pathNameZip, true);
     }
 
     private void unpackZipAndCopy(String path) {
@@ -503,9 +515,10 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         }
     }
 
-    private void copyNew(String srcDir, String dstDir, boolean delete) {
+    private void copyNew(String srcDir, String dstDir, String pathZip, boolean delete) {
         File src = new File(srcDir);
         File dst = new File(dstDir);
+        File zip = new File(pathZip);
         try {
             FileUtils.copyFile(src, dst);
         } catch (IOException e) {
@@ -513,7 +526,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             Toast.makeText(getContext(), "12312", Toast.LENGTH_SHORT).show();
         }
         if (delete == true) {
-            deleteFolder(src);
+            deleteFolder(zip);
         }
     }
 
@@ -572,10 +585,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         mCountApk++;
         try {
             if (file.exists()) {
-                while (file.getParentFile() != null){
-                    FileUtils.forceDelete(file);
-                }
-                //FileUtils.deleteDirectory(file.getParentFile() + "/");
+                FileUtils.deleteDirectory(file);
                 requireActivity().runOnUiThread(() -> {
                     setShowHideProgress(false);
                     if (!mMultilpleSetupApk) {
@@ -589,6 +599,9 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 });
             }
         } catch (Exception e) {
+            requireActivity().runOnUiThread(() -> {
+                Toast.makeText(getContext(), "Delete file khong thanh cong", Toast.LENGTH_SHORT).show();
+            });
             e.printStackTrace(System.err);
 
         }
