@@ -523,7 +523,9 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             FileUtils.copyFile(src, dst);
         } catch (IOException e) {
             e.printStackTrace();
-            Toast.makeText(getContext(), "12312", Toast.LENGTH_SHORT).show();
+            requireActivity().runOnUiThread(() -> {
+                Toast.makeText(getContext(), "Setup file không thành công", Toast.LENGTH_SHORT).show();
+            });
         }
         if (delete == true) {
             deleteFolder(zip);
