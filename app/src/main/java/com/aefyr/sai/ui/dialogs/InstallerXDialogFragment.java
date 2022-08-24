@@ -27,7 +27,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -288,6 +287,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         if (requestCode == REQUEST_CODE_GET_FILES && resultCode == Activity.RESULT_OK) {
             if (resultCode != Activity.RESULT_OK || data == null)
                 return;
+
             if (data.getData() != null) {
                 setShowHideProgress(true);
                 mUriApk = data.getData();
@@ -365,21 +365,25 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                     pathNameZip = path + filename;
                     countFileZip++;
                 }
+
                 if (ze.getName().contains("/obb/")) {
                     if (countFileObb == 0) {
                         parentFileNameObb = ze.getName();
                     }
                     countFileObb++;
                 }
+
                 if (ze.getName().contains(".obb")) {
                     fileNameObb1 = ze.getName();
                     pathNameObb = path + ze.getName();
                 }
+
                 if (ze.isDirectory()) {
                     File fmd = new File(pathName);
                     fmd.mkdirs();
                     continue;
                 }
+
                 FileOutputStream fout = new FileOutputStream(pathName);
                 if (ze.getName().contains(".obb")) {
                     while ((count = zis.read(buffer)) != -1) {
@@ -518,10 +522,28 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         }
     }
 
+    public void deleteDirectoryAndroid12(File path) {
+        try {
+            if (path.exists()) {
+                File[] files = path.listFiles();
+                for (File file : files) {
+                    if (file.isDirectory()) {
+                        deleteDirectoryAndroid12(file);
+                    } else {
+                        file.delete();
+                    }
+                }
+            }
+            path.delete();
+        } catch (Exception e) {
+
+        }
+
+    }
+
     private void copyAboveAndroidQ(String srcDir, String dstDir, String pathZip, boolean delete) {
         File src = new File(srcDir);
         File dst = new File(dstDir);
-        File zip = new File(pathZip);
         try {
             FileUtils.copyFile(src, dst);
         } catch (IOException e) {
@@ -530,8 +552,14 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 Toast.makeText(getContext(), "Setup file không thành công", Toast.LENGTH_SHORT).show();
             });
         }
+        while (src.getParentFile() != null) {
+            src = src.getParentFile();
+            if (src.getName().contains(".zip")) {
+                break;
+            }
+        }
         if (delete == true) {
-            deleteFolder(zip);
+            deleteFolder(src);
         }
     }
 
@@ -590,7 +618,11 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         mCountApk++;
         try {
             if (file.exists()) {
-                FileUtils.deleteDirectory(file);
+                if (Build.VERSION.SDK_INT >= 12) {
+                    deleteDirectoryAndroid12(file);
+                } else {
+                    FileUtils.deleteDirectory(file);
+                }
                 requireActivity().runOnUiThread(() -> {
                     setShowHideProgress(false);
                     if (!mMultilpleSetupApk) {
