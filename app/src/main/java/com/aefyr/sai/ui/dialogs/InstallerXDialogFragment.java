@@ -90,7 +90,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
     private int mCountApk = 0;
     private boolean mDelete = false;
 
-
     /**
      * Create an instance of InstallerXDialogFragment with given apk source uri and UriHostFactory class.
      * If {@code apkSourceUri} is null, dialog will let user pick apk source file.
@@ -114,7 +113,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         getDialog().setCanceledOnTouchOutside(true);
-
     }
 
     @Override
@@ -641,10 +639,10 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 Toast.makeText(getContext(), "Delete file không thành công", Toast.LENGTH_SHORT).show();
             });
             e.printStackTrace(System.err);
-
         }
-
     }
+
+
 
     private void setShowHideProgress(Boolean isShow) {
         if (!isShow) {
