@@ -14,6 +14,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.PowerManager;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
@@ -86,9 +87,12 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
     private List<Observable<?>> mListObservable = new ArrayList<>();
     private Uri mUriApk;
     private List<File> mListFileApk;
-    private boolean mMultilpleSetupApk;
+    private List<Uri> mListUriApk;
+    private boolean mMultilpleSetupApk = false;
     private int mCountApk = 0;
     private boolean mDelete = false;
+    private PowerManager mPowerManager;
+    private PowerManager.WakeLock mWl;
 
     /**
      * Create an instance of InstallerXDialogFragment with given apk source uri and UriHostFactory class.
@@ -118,8 +122,10 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Bundle args = getArguments();
 
+        mPowerManager = (PowerManager) getActivity().getSystemService(Context.POWER_SERVICE);
+        mWl = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "My Tag");
+        Bundle args = getArguments();
         UriHostFactory uriHostFactory = null;
         if (args != null) {
             String uriHostFactoryClass = args.getString(ARG_URI_HOST_FACTORY);
@@ -175,8 +181,19 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             dismiss();
         });
 
-        view.findViewById(R.id.button_installerx_fp_internal).setOnClickListener(v -> checkPermissionsAndPickFiles());
-        view.findViewById(R.id.button_installerx_fp_saf).setOnClickListener(v -> pickFilesWithSaf(false));
+        view.findViewById(R.id.button_installerx_fp_internal).setOnClickListener(v
+                -> {
+            mWl.acquire();
+            checkPermissionsAndPickFiles();
+        });
+        view.findViewById(R.id.button_installerx_fp_saf).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mWl.acquire();
+                pickFilesWithSaf(false);
+            }
+        });
+
 
         TextView warningTv = view.findViewById(R.id.tv_installerx_warning);
         mViewModel.getState().observe(this, state -> {
@@ -215,8 +232,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
     }
 
     private void checkPermissionsAndPickFiles() {
-        mMultilpleSetupApk = true;
-
         mActionAfterGettingStoragePermissions = PICK_WITH_INTERNAL_FILEPICKER;
 
         DialogProperties properties = new DialogProperties();
@@ -301,6 +316,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                         Toast.makeText(getContext(), "File apk có thể bị hỏng!", Toast.LENGTH_SHORT).show();
                     }
                 }
+                mUriApk = data.getData();
                 return;
             }
 
@@ -534,7 +550,10 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             }
             path.delete();
         } catch (Exception e) {
-
+            requireActivity().runOnUiThread(() -> {
+                setShowHideProgress(false);
+                Toast.makeText(getContext(), "Delete file không thành công", Toast.LENGTH_SHORT).show();
+            });
         }
 
     }
@@ -598,10 +617,18 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
     @Override
     public void onFilesSelected(String tag, List<File> files) {
         setShowHideProgress(true);
+        mMultilpleSetupApk = true;
         if (files.size() == 1) {
+            mUriApk = Uri.fromFile(files.get(0));
             unzipAndCopy(Uri.fromFile(files.get(0)));
         } else if (files.size() > 1) {
-            mListFileApk = files;
+            mCountApk = 2;
+            mUriApk = Uri.fromFile(files.get(0));
+          //  mListFileApk = files;
+            mListUriApk = new ArrayList<Uri>();
+            for (int i = 0; i < files.size(); i++) {
+                mListUriApk.add(Uri.fromFile(files.get(i)));
+            }
             mutilpleSetupApk(files);
         }
     }
@@ -613,7 +640,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
     }
 
     private void deleteFolder(File file) {
-        mCountApk++;
+        //mCountApk++;
         try {
             if (file.exists()) {
                 if (Build.VERSION.SDK_INT >= 12) {
@@ -625,12 +652,19 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                     setShowHideProgress(false);
                     if (!mMultilpleSetupApk) {
                         mViewModel.setApkSourceUris(Collections.singletonList(mUriApk));
-                    } else if (mCountApk >= 2) {
-                        setShowHideProgress(false);
-                        mViewModel.setApkSourceFiles(mListFileApk);
-                    } else if (mCountApk < 2) {
-                        setShowHideProgress(true);
+                    } else if (mMultilpleSetupApk) {
+                        if (mCountApk == 1) {
+                            setShowHideProgress(false);
+                            mViewModel.setApkSourceUris(Collections.singletonList(mUriApk));
+                        } else if (mCountApk >= 2) {
+                            setShowHideProgress(false);
+                            mViewModel.setApkSourceUris(mListUriApk);
+                           // mViewModel.setApkSourceFiles(mListFileApk);
+                        } else {
+                            setShowHideProgress(true);
+                        }
                     }
+                    mWl.release();
                 });
             }
         } catch (Exception e) {
@@ -641,7 +675,6 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             e.printStackTrace(System.err);
         }
     }
-
 
 
     private void setShowHideProgress(Boolean isShow) {

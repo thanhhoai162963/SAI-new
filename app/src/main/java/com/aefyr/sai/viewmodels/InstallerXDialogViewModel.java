@@ -2,6 +2,7 @@ package com.aefyr.sai.viewmodels;
 
 import android.content.Context;
 import android.net.Uri;
+import android.os.PowerManager;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -64,6 +65,8 @@ public class InstallerXDialogViewModel extends ViewModel {
 
     private Selection<String> mPartsSelection = new Selection<>(new SimpleKeyStorage());
     private List<UriMessResolutionResult> mResolutionResults;
+    private PowerManager mPowerManager;
+    private PowerManager.WakeLock mWl;
 
     public InstallerXDialogViewModel(@NonNull Context appContext, @Nullable UriHost uriHost) {
         mContext = appContext;
