@@ -619,28 +619,40 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         setShowHideProgress(true);
         mMultilpleSetupApk = true;
         if (files.size() == 1) {
+            mCountApk = 1;
             mUriApk = Uri.fromFile(files.get(0));
-            unzipAndCopy(Uri.fromFile(files.get(0)));
+            if (mUriApk.getPath().contains(".apk")) {
+                setShowHideProgress(false);
+                mViewModel.setApkSourceUris(Collections.singletonList(mUriApk));
+                mWl.release();
+            } else if (mUriApk.getPath().contains(".zip")) {
+                unzipAndCopy(Uri.fromFile(files.get(0)));
+            }
         } else if (files.size() > 1) {
             mCountApk = 2;
             mUriApk = Uri.fromFile(files.get(0));
-          //  mListFileApk = files;
             mListUriApk = new ArrayList<Uri>();
             for (int i = 0; i < files.size(); i++) {
                 mListUriApk.add(Uri.fromFile(files.get(i)));
             }
-            mutilpleSetupApk(files);
+            if (mListUriApk.get(0).getPath().contains(".apk")) {
+                setShowHideProgress(false);
+                mViewModel.setApkSourceUris(mListUriApk);
+                mWl.release();
+            } else if (mListUriApk.get(0).getPath().contains(".zip")) {
+                mutilpleSetupApk(files);
+            }
         }
     }
 
     private void mutilpleSetupApk(List<File> files) {
         for (int i = 0; i < files.size(); i++) {
             unzipAndCopy(Uri.fromFile(files.get(i)));
+            break;
         }
     }
 
     private void deleteFolder(File file) {
-        //mCountApk++;
         try {
             if (file.exists()) {
                 if (Build.VERSION.SDK_INT >= 12) {
@@ -659,14 +671,19 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                         } else if (mCountApk >= 2) {
                             setShowHideProgress(false);
                             mViewModel.setApkSourceUris(mListUriApk);
-                           // mViewModel.setApkSourceFiles(mListFileApk);
+                            // mViewModel.setApkSourceFiles(mListFileApk);
                         } else {
                             setShowHideProgress(true);
                         }
                     }
-                    mWl.release();
+                    if (!mMultilpleSetupApk) {
+                        mWl.release();
+                    } else {
+
+                    }
                 });
             }
+
         } catch (Exception e) {
             requireActivity().runOnUiThread(() -> {
                 setShowHideProgress(false);
