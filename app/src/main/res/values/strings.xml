@@ -9,6 +9,11 @@
     <string name="help">Help</string>
     <string name="error">Error</string>
     <string name="copy2">Copy</string>
+    <string name="alert" >Thông báo</string>
+
+    <string name="access" tools:ignore="MissingTranslation">Đồng ý</string>
+    <string name="syns" tools:ignore="MissingTranslation">Hệ thống cấp quyền truy cập folder obb</string>
+
     <string name="copied">Copied</string>
     <string name="dont_show_again">Don\'t show again</string>
     <string name="warning">Warning</string>

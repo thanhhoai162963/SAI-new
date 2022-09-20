@@ -246,7 +246,15 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 return;
             }
         }
-        PermissionsUtils.checkAndRequestStoragePermissions(this);
+        DialogProperties properties = new DialogProperties();
+        properties.selection_mode = DialogConfigs.MULTI_MODE;
+        properties.selection_type = DialogConfigs.FILE_SELECT;
+        properties.root = Environment.getExternalStorageDirectory();
+        properties.offset = new File(mHelper.getHomeDirectory());
+        properties.extensions = new String[]{"zip", "apks", "xapk", "apk", "apkm"};
+        properties.sortBy = mHelper.getFilePickerSortBy();
+        properties.sortOrder = mHelper.getFilePickerSortOrder();
+        FilePickerDialogFragment.newInstance(null, getString(R.string.installer_pick_apks), properties).show(getChildFragmentManager(), "dialog_files_picker");
     }
 
     private void pickFilesWithSaf(boolean ignorePermissions) {
@@ -279,21 +287,20 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == PermissionsUtils.REQUEST_CODE_STORAGE_PERMISSIONS) {
-            switch (mActionAfterGettingStoragePermissions) {
-                case PICK_WITH_INTERNAL_FILEPICKER:
-                    if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                switch (mActionAfterGettingStoragePermissions) {
+                    case PICK_WITH_INTERNAL_FILEPICKER:
 
-                        resetApp();
-                    } else {
-                        Toast.makeText(getActivity().getApplicationContext(), "Ban can cap quyen de thao tac file obb", Toast.LENGTH_SHORT).show();
-                    }
-                    break;
-                case PICK_WITH_SAF:
-                    if (resetApp() == true){
-                        pickFilesWithSaf(false);
-                    }
-                    break;
+                        MessagePermissionDialog.newInstance().show(getChildFragmentManager(), "123");
+                        //checkPermissionsAndPickFiles();
+                        break;
+                    case PICK_WITH_SAF:
+                        MessagePermissionDialog.newInstance().show(getChildFragmentManager(), "123");
+                        //  pickFilesWithSaf(true);
+                        break;
+                }
             }
+        }
             /*boolean permissionsGranted = !(grantResults.length == 0 || grantResults[0] == PackageManager.PERMISSION_DENIED);
             switch (mActionAfterGettingStoragePermissions) {
                 case PICK_WITH_INTERNAL_FILEPICKER:
@@ -307,23 +314,12 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                     break;
             }*/
 
-        }
-    }
-
-    private boolean resetApp() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            getActivity().finishAffinity();
-            Intent intent = new Intent(getActivity().getApplicationContext(), MainActivity.class);
-            startActivity(intent);
-        }
-        return true;
     }
 
     @SuppressLint("WrongConstant")
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
         if (requestCode == REQUEST_CODE_GET_FILES && resultCode == Activity.RESULT_OK) {
             if (resultCode != Activity.RESULT_OK || data == null) {
                 return;
@@ -745,16 +741,10 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                 break;
             }
             case DIALOG_TAG_Q_SAF_WARNING_INTERNAL: {
-                DialogProperties properties = new DialogProperties();
-                properties.selection_mode = DialogConfigs.MULTI_MODE;
-                properties.selection_type = DialogConfigs.FILE_SELECT;
-                properties.root = Environment.getExternalStorageDirectory();
-                properties.offset = new File(mHelper.getHomeDirectory());
-                properties.extensions = new String[]{"zip", "apks", "xapk", "apk", "apkm"};
-                properties.sortBy = mHelper.getFilePickerSortBy();
-                properties.sortOrder = mHelper.getFilePickerSortOrder();
-
-                FilePickerDialogFragment.newInstance(null, getString(R.string.installer_pick_apks), properties).show(getChildFragmentManager(), "dialog_files_picker");
+                if (PermissionsUtils.checkAndRequestStoragePermissions(this)) {
+                    checkPermissionsAndPickFiles();
+                }
+                break;
             }
         }
     }
