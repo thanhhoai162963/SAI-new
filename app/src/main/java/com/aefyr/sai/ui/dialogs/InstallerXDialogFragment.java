@@ -28,6 +28,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -35,6 +36,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.aefyr.sai.R;
 import com.aefyr.sai.adapters.SplitApkSourceMetaAdapter;
 import com.aefyr.sai.installerx.resolver.urimess.UriHostFactory;
+import com.aefyr.sai.ui.activities.MainActivity;
 import com.aefyr.sai.ui.dialogs.base.BaseBottomSheetDialogFragment;
 import com.aefyr.sai.utils.PermissionsUtils;
 import com.aefyr.sai.utils.PreferencesHelper;
@@ -278,25 +280,18 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
 
         if (requestCode == PermissionsUtils.REQUEST_CODE_STORAGE_PERMISSIONS) {
             switch (mActionAfterGettingStoragePermissions) {
-                case PICK_WITH_INTERNAL_FILEPICKER: {
+                case PICK_WITH_INTERNAL_FILEPICKER:
                     if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                        DialogProperties properties = new DialogProperties();
-                        properties.selection_mode = DialogConfigs.MULTI_MODE;
-                        properties.selection_type = DialogConfigs.FILE_SELECT;
-                        properties.root = Environment.getExternalStorageDirectory();
-                        properties.offset = new File(mHelper.getHomeDirectory());
-                        properties.extensions = new String[]{"zip", "apks", "xapk", "apk", "apkm"};
-                        properties.sortBy = mHelper.getFilePickerSortBy();
-                        properties.sortOrder = mHelper.getFilePickerSortOrder();
 
-                        FilePickerDialogFragment.newInstance(null, getString(R.string.installer_pick_apks), properties).show(getChildFragmentManager(), "dialog_files_picker");
+                        resetApp();
                     } else {
                         Toast.makeText(getActivity().getApplicationContext(), "Ban can cap quyen de thao tac file obb", Toast.LENGTH_SHORT).show();
                     }
-                }
-                break;
+                    break;
                 case PICK_WITH_SAF:
-                    pickFilesWithSaf(true);
+                    if (resetApp() == true){
+                        pickFilesWithSaf(false);
+                    }
                     break;
             }
             /*boolean permissionsGranted = !(grantResults.length == 0 || grantResults[0] == PackageManager.PERMISSION_DENIED);
@@ -315,15 +310,24 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         }
     }
 
+    private boolean resetApp() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            getActivity().finishAffinity();
+            Intent intent = new Intent(getActivity().getApplicationContext(), MainActivity.class);
+            startActivity(intent);
+        }
+        return true;
+    }
+
     @SuppressLint("WrongConstant")
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == REQUEST_CODE_GET_FILES && resultCode == Activity.RESULT_OK) {
-            if (resultCode != Activity.RESULT_OK || data == null)
+            if (resultCode != Activity.RESULT_OK || data == null) {
                 return;
-
+            }
             if (data.getData() != null) {
                 setShowHideProgress(true);
                 mUriApk = data.getData();
@@ -733,14 +737,14 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
     @Override
     public void onDialogDismissed(@NonNull String dialogTag) {
         switch (dialogTag) {
-            case DIALOG_TAG_Q_SAF_WARNING_EXTERNAL:{
+            case DIALOG_TAG_Q_SAF_WARNING_EXTERNAL: {
                 mActionAfterGettingStoragePermissions = PICK_WITH_SAF;
                 if (PermissionsUtils.checkAndRequestStoragePermissions(this)) {
                     pickFilesWithSaf(false);
                 }
                 break;
             }
-            case DIALOG_TAG_Q_SAF_WARNING_INTERNAL:{
+            case DIALOG_TAG_Q_SAF_WARNING_INTERNAL: {
                 DialogProperties properties = new DialogProperties();
                 properties.selection_mode = DialogConfigs.MULTI_MODE;
                 properties.selection_type = DialogConfigs.FILE_SELECT;
