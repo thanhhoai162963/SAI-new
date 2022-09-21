@@ -4,6 +4,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ClipData;
+import android.content.ComponentName;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -28,7 +29,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -186,7 +186,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         view.findViewById(R.id.button_installerx_fp_internal).setOnClickListener(v
                 -> {
             mWl.acquire();
-            checkPermissionsAndPickFiles();
+            checkPermissionsAndPickFiles(false);
         });
         view.findViewById(R.id.button_installerx_fp_saf).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -233,9 +233,9 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         view.requestFocus(); //TV fix
     }
 
-    private void checkPermissionsAndPickFiles() {
+    private void checkPermissionsAndPickFiles(boolean ignorePermissions) {
         mActionAfterGettingStoragePermissions = PICK_WITH_INTERNAL_FILEPICKER;
-        if (Utils.apiIsAtLeast(30)) {
+        if (Utils.apiIsAtLeast(30) && !ignorePermissions) {
             if (requireContext().checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 SimpleAlertDialogFragment.newInstance(requireContext(), R.string.warning, R.string.installerx_thank_you_scoped_storage_very_cool).show(getChildFragmentManager(), DIALOG_TAG_Q_SAF_WARNING_INTERNAL);
                 return;
@@ -290,13 +290,12 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 switch (mActionAfterGettingStoragePermissions) {
                     case PICK_WITH_INTERNAL_FILEPICKER:
-
-                        MessagePermissionDialog.newInstance().show(getChildFragmentManager(), "123");
-                        //checkPermissionsAndPickFiles();
+                        MessagePermissionDialog.newInstance().show(getActivity().getSupportFragmentManager(), "sad");
                         break;
                     case PICK_WITH_SAF:
-                        MessagePermissionDialog.newInstance().show(getChildFragmentManager(), "123");
-                        //  pickFilesWithSaf(true);
+                        triggerRebirth(getContext());
+
+
                         break;
                 }
             }
@@ -314,6 +313,24 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                     break;
             }*/
 
+    }
+
+    public static void triggerRebirth(Context context) {
+        PackageManager packageManager = context.getPackageManager();
+        Intent intent = packageManager.getLaunchIntentForPackage(context.getPackageName());
+        ComponentName componentName = intent.getComponent();
+        Intent mainIntent = Intent.makeRestartActivityTask(componentName);
+        context.startActivity(mainIntent);
+        Runtime.getRuntime().exit(0);
+    }
+
+    private boolean resetApp() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            getActivity().finishAffinity();
+            Intent intent = new Intent(getActivity().getApplicationContext(), MainActivity.class);
+            startActivity(intent);
+        }
+        return true;
     }
 
     @SuppressLint("WrongConstant")
@@ -443,6 +460,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
         String pathObb = fileNameObb1.replace(parentFileNameObb, "");
         copyAboveAndroidQ(pathNameObb, Environment.getExternalStorageDirectory().getPath() + "/Android/obb/" + pathObb, pathNameZip, true);
     }
+
 
     private void unpackZipAndCopy(String path) {
         String pathName = "";
@@ -585,10 +603,9 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
     private void copyAboveAndroidQ(String srcDir, String dstDir, String pathZip, boolean delete) {
         File src = new File(srcDir);
         File dst = new File(dstDir);
+
         try {
-            if (dst.exists() == false) {
-                FileUtils.copyFile(src, dst);
-            }
+            FileUtils.copyFile(src, dst);
         } catch (IOException e) {
             e.printStackTrace();
             requireActivity().runOnUiThread(() -> {
@@ -742,7 +759,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
             }
             case DIALOG_TAG_Q_SAF_WARNING_INTERNAL: {
                 if (PermissionsUtils.checkAndRequestStoragePermissions(this)) {
-                    checkPermissionsAndPickFiles();
+                    checkPermissionsAndPickFiles(false);
                 }
                 break;
             }

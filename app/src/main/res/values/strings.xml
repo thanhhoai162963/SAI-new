@@ -11,8 +11,8 @@
     <string name="copy2">Copy</string>
     <string name="alert" >Thông báo</string>
 
-    <string name="access" tools:ignore="MissingTranslation">Đồng ý</string>
-    <string name="syns" tools:ignore="MissingTranslation">Hệ thống cấp quyền truy cập folder obb</string>
+    <string name="access" tools:ignore="MissingTranslation">Xong</string>
+    <string name="syns" tools:ignore="MissingTranslation">Hệ thống đã cấp quyền truy cập file obb</string>
 
     <string name="copied">Copied</string>
     <string name="dont_show_again">Don\'t show again</string>

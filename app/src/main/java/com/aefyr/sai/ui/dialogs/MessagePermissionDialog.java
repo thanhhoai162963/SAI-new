@@ -1,8 +1,10 @@
 package com.aefyr.sai.ui.dialogs;
 
 import android.annotation.SuppressLint;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -14,7 +16,6 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
 import com.aefyr.sai.R;
-import com.aefyr.sai.ui.activities.MainActivity;
 import com.google.android.material.button.MaterialButton;
 
 public class MessagePermissionDialog extends DialogFragment {
@@ -42,16 +43,21 @@ public class MessagePermissionDialog extends DialogFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mMaterialButton = (MaterialButton) view.findViewById(R.id.button_access);
-        mMaterialButton.setOnClickListener(view1 -> resetApp());
+        mMaterialButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                triggerRebirth(getContext());
+            }
+        });
     }
 
-    @SuppressLint("ObsoleteSdkInt")
-    private void resetApp() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            getActivity().finishAffinity();
-            Intent intent = new Intent(getActivity().getApplicationContext(), MainActivity.class);
-            startActivity(intent);
-        }
+    public static void triggerRebirth(Context context) {
+        PackageManager packageManager = context.getPackageManager();
+        Intent intent = packageManager.getLaunchIntentForPackage(context.getPackageName());
+        ComponentName componentName = intent.getComponent();
+        Intent mainIntent = Intent.makeRestartActivityTask(componentName);
+        context.startActivity(mainIntent);
+        Runtime.getRuntime().exit(0);
     }
     public interface OnDismissListener {
         void onDialogDismissed();
