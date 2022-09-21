@@ -4,13 +4,5 @@
         android:title="@string/main_installer"
         android:icon="@drawable/ic_install"
         android:id="@+id/menu_installer" />
-    <item
-        android:title="@string/main_backup"
-        android:icon="@drawable/ic_backup"
-        android:id="@+id/menu_backup" />
 
-    <item
-        android:title="@string/settings_title"
-        android:icon="@drawable/ic_settings"
-        android:id="@+id/menu_settings" />
 </menu>

@@ -108,12 +108,12 @@ public class MainActivity extends ThemedActivity implements BottomNavigationView
             case R.id.menu_installer:
                 mFragmentNavigator.switchTo("installer");
                 break;
-            case R.id.menu_backup:
-                mFragmentNavigator.switchTo("backup");
-                break;
-            case R.id.menu_settings:
-                mFragmentNavigator.switchTo("settings");
-                break;
+//            case R.id.menu_backup:
+//                mFragmentNavigator.switchTo("backup");
+//                break;
+//            case R.id.menu_settings:
+//                mFragmentNavigator.switchTo("settings");
+//                break;
         }
 
         return true;
