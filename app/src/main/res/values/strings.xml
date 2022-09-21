@@ -12,7 +12,7 @@
     <string name="alert" >Thông báo</string>
 
     <string name="access" tools:ignore="MissingTranslation">Xong</string>
-    <string name="syns" tools:ignore="MissingTranslation">Hệ thống đã cấp quyền truy cập file obb</string>
+    <string name="syns" tools:ignore="MissingTranslation">Từ android 12 hệ thống sẽ khởi động lại để cấp quyền truy cập file obb.</string>
 
     <string name="copied">Copied</string>
     <string name="dont_show_again">Don\'t show again</string>

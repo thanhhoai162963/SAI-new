@@ -293,9 +293,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
                         MessagePermissionDialog.newInstance().show(getActivity().getSupportFragmentManager(), "sad");
                         break;
                     case PICK_WITH_SAF:
-                        triggerRebirth(getContext());
-
-
+                        MessagePermissionDialog.newInstance().show(getActivity().getSupportFragmentManager(), "sad");
                         break;
                 }
             }

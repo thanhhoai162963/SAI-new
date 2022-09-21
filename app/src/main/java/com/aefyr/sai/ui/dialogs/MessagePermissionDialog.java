@@ -1,11 +1,9 @@
 package com.aefyr.sai.ui.dialogs;
 
-import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -46,12 +44,12 @@ public class MessagePermissionDialog extends DialogFragment {
         mMaterialButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                triggerRebirth(getContext());
+                restartApp(getContext());
             }
         });
     }
 
-    public static void triggerRebirth(Context context) {
+    public static void restartApp(Context context) {
         PackageManager packageManager = context.getPackageManager();
         Intent intent = packageManager.getLaunchIntentForPackage(context.getPackageName());
         ComponentName componentName = intent.getComponent();
