@@ -8,6 +8,7 @@
     android:orientation="vertical">
 
     <LinearLayout
+        android:id="@+id/layout_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical">
@@ -17,20 +18,20 @@
             style="@style/SAICoolbarImageButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:scaleType="center"
             android:layout_weight="1"
             android:contentDescription="@string/help"
+            android:scaleType="center"
             app:srcCompat="@drawable/ic_help" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:maxLines="2"
             android:gravity="center"
-            android:text="@string/app_name_full" />
+            android:maxLines="2"
+            android:text="@string/app_name_full"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
         <ImageButton
             android:id="@+id/ib_toggle_theme"
@@ -45,7 +46,7 @@
         android:id="@+id/rv_installer_sessions"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/coolbar_main"
+        android:layout_below="@id/layout_title"
         android:layout_weight="1"
         android:visibility="gone">
 
@@ -55,7 +56,7 @@
         android:id="@+id/container_installer_placeholder"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/coolbar_main"
+        android:layout_below="@id/layout_title"
         android:layout_weight="1"
         android:visibility="visible">
 
