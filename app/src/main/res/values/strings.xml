@@ -1,5 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <string name="app_name" translatable="false">SAI</string>
+    <string name="app_name" translatable="false">APKGosu</string>
     <string name="app_name_full" translatable="false">APKGosu xapk install</string>
 
     <string name="yes">Yes</string>
@@ -33,7 +33,8 @@
     <string name="installer_installation_failed">App not installed</string>
     <string name="installer_installation_in_progress">Installing…</string>
     <string name="installer_install_apks">Install APKs</string>
-    <string name="installer_help"><b>What is SAI?</b>\nSAI (Split APKs Installer) is an app that lets you install multiple APKs as if it was a single package. This is useful for installing apps that are distributed as App Bundles since Android provides no built-in way to install them from sources other than Google Play.\n\n<b>How to use SAI?</b>\nClick \"Install APKs\" button and select base APK and additional configuration-specific APKs or a ZIP archive that contains all required APKs, then click \"Select\" button to start installation process.\n\n<b>.apks</b>\nYou can rename a .zip archive that contains .apk files to .apks (e.g.: somesplitapp.zip -> somesplitapp.apks), so it can be opened with SAI from other apps.\n\n<b>Installing apps from external storage</b>\nYou can long click install button to select files via system file picker that supports external storage.</string>
+    <string name="installer_help" translatable="false"></string>
+    <string name="installer_help_new" tools:ignore="MissingTranslation"></string>
     <string name="installer_pick_apks">Select files to install</string>
     <string name="installer_app_installed">App installed</string>
     <string name="installer_open">Open</string>
@@ -337,15 +338,15 @@
     <string name="installerx_notice_huge_app">This app is huge (>150MB). With huge apps there\'s a chance (the bigger the app size, the higher) that installation will hang but app will still take up storage space that you won\'t be able to reclaim without using root or doing factory reset</string>
 
     <string name="installerx_android_uri_host_file_too_big">File is too big to copy and your system doesn\'t support reading SAF files without copying</string>
-    <string name="installerx_thank_you_scoped_storage_very_cool">On Android 11 and up SAI requires storage permission to directly read files selected via system file picker due to scoped storage implementation making 0 sense. You can deny storage permission, but then SAI will have to copy selected files to parse them, SAI won\'t copy and parse large files.</string>
-    <string name="installerx_thank_you_obb_very_cool" tools:ignore="MissingTranslation">SAI cần bạn cấp quyền cài đặt file obb. Bạn vui lòng tìm SAI trong hệ thông và cấp quyền cài đặt file mở rộng.</string>
-    <string name="theme_sai">SAI</string>
+    <string name="installerx_thank_you_scoped_storage_very_cool">On Android 11 and up APKGosu requires storage permission to directly read files selected via system file picker due to scoped storage implementation making 0 sense. You can deny storage permission, but then APKGosu will have to copy selected files to parse them, APKGosu won\'t copy and parse large files.</string>
+    <string name="installerx_thank_you_obb_very_cool" tools:ignore="MissingTranslation">APKGosu cần bạn cấp quyền cài đặt file obb. Bạn vui lòng tìm APKGosu trong hệ thông và cấp quyền cài đặt file mở rộng.</string>
+    <string name="theme_sai">APKGosu</string>
     <string name="theme_ruby">Ruby</string>
     <string name="theme_rena">Rena</string>
     <string name="theme_ukrrooter">Ukrrooter</string>
     <string name="theme_amoled">Amoled</string>
     <string name="theme_pixel">Pixel</string>
-    <string name="theme_sai_fdroid">SAI (F-Droid)</string>
+    <string name="theme_sai_fdroid">APKGosu (F-Droid)</string>
     <string name="theme_dark">Dark</string>
     <string name="theme_gold">Gold</string>
     <string name="theme_rena_light">Rena Light</string>
