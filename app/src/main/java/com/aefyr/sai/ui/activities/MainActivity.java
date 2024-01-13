@@ -1,9 +1,14 @@
 package com.aefyr.sai.ui.activities;
 
+
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.MenuItem;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -23,7 +28,10 @@ import com.aefyr.sai.utils.FragmentNavigator;
 import com.aefyr.sai.utils.MiuiUtils;
 import com.aefyr.sai.utils.PreferencesHelper;
 import com.aefyr.sai.utils.PreferencesKeys;
+import com.aefyr.sai.utils.SharedPreferencesManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+import java.util.Locale;
 
 public class MainActivity extends ThemedActivity implements BottomNavigationView.OnNavigationItemSelectedListener, FragmentNavigator.FragmentFactory {
 
@@ -36,12 +44,11 @@ public class MainActivity extends ThemedActivity implements BottomNavigationView
     private boolean mIsNavigationEnabled = true;
 
     private BillingManager mBillingManager;
-
+    private RelativeLayout view;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         mBillingManager = DefaultBillingManager.getInstance(this);
 
         //TODO is this ok?
@@ -63,6 +70,25 @@ public class MainActivity extends ThemedActivity implements BottomNavigationView
             deliverActionViewUri(intent.getData());
             getIntent().setData(null);
         }
+
+        restartLanguageApp();
+    }
+
+    private void restartLanguageApp() {
+        if (Locale.getDefault().getLanguage() != "en" && SharedPreferencesManager.getInstance(this).getLang() != "vi") {
+            Locale locale = new Locale("en");
+            Locale.setDefault(locale);
+            Configuration config = getResources().getConfiguration();
+            config.locale = locale;
+            getResources().updateConfiguration(config, getResources().getDisplayMetrics());
+        }
+    }
+
+    public void restartApp() {
+        Intent intent = getBaseContext().getPackageManager().getLaunchIntentForPackage(getBaseContext().getPackageName());
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+        finish();
     }
 
     @Override

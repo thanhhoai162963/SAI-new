@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="yes">Có</string>
+    <string name="changeLanguage">Thay đổi ngôn ngữ</string>
+    <string name="vietnames">Tiếng việt</string>
+    <string name="english">Tiếng anh</string>
     <string name="no">Không</string>
     <string name="cancel">Hủy bỏ</string>
     <string name="ok">OK</string>
@@ -318,6 +321,8 @@
     <string name="installerx_android_uri_host_file_too_big">File is too big to copy and your system doesn\'t support reading SAF files without copying</string>
     <string name="installerx_thank_you_scoped_storage_very_cool">On Android 11 and up APKGosu requires storage permission to directly read files selected via system file picker due to scoped storage implementation making 0 sense. You can deny storage permission, but then APKGosu will have to copy selected files to parse them, APKGosu won\'t copy and parse large files.</string>
     <string name="theme_sai">APKGosu</string>
+    <string name="installerx_thank_you_all_file_very_cool" >Từ android 11 trở lên APKGosu cần bạn cấp quyền truy cập hệ thống file để cài file. Bạn vui lòng tìm APKGosu trong hệ thông và cấp quyền cài đặt file mở rộng.</string>
+
     <string name="installerx_thank_you_obb_very_cool">APKGosu cần bạn cấp quyền cài đặt file obb. Bạn vui lòng tìm APKGosu trong hệ thông và cấp quyền cài đặt file mở rộng.</string>
     <string name="theme_ruby">Ruby</string>
     <string name="theme_rena">Rena</string>

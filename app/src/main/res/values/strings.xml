@@ -1,6 +1,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name" translatable="false">APKGosu</string>
     <string name="app_name_full" translatable="false">APKGosu xapk install</string>
+    <string name="changeLanguage">Change language</string>
+    <string name="vietnames">Viet nam</string>
+    <string name="english">English</string>
 
     <string name="yes">Yes</string>
     <string name="no">No</string>
@@ -9,7 +12,7 @@
     <string name="help">Help</string>
     <string name="error">Error</string>
     <string name="copy2">Copy</string>
-    <string name="alert" >Thông báo</string>
+    <string name="alert">Thông báo</string>
 
     <string name="access" tools:ignore="MissingTranslation">Đồng ý</string>
     <string name="syns" tools:ignore="MissingTranslation">Từ android 12 hệ thống sẽ khởi động lại để cấp quyền truy cập file obb.</string>
@@ -339,7 +342,8 @@
 
     <string name="installerx_android_uri_host_file_too_big">File is too big to copy and your system doesn\'t support reading SAF files without copying</string>
     <string name="installerx_thank_you_scoped_storage_very_cool">On Android 11 and up APKGosu requires storage permission to directly read files selected via system file picker due to scoped storage implementation making 0 sense. You can deny storage permission, but then APKGosu will have to copy selected files to parse them, APKGosu won\'t copy and parse large files.</string>
-    <string name="installerx_thank_you_obb_very_cool" tools:ignore="MissingTranslation">APKGosu cần bạn cấp quyền cài đặt file obb. Bạn vui lòng tìm APKGosu trong hệ thông và cấp quyền cài đặt file mở rộng.</string>
+    <string name="installerx_thank_you_obb_very_cool" tools:ignore="MissingTranslation">APKGosu needs your permission to install the obb file. Please find APKGosu in the system and grant permission to install the extension file.</string>
+    <string name="installerx_thank_you_all_file_very_cool" translatable="false">From Android 11 and above APKGosu needs you to grant file system access permission to install the file. Please find APKGosu in the system settings and permissions file extension.</string>
     <string name="theme_sai">APKGosu</string>
     <string name="theme_ruby">Ruby</string>
     <string name="theme_rena">Rena</string>

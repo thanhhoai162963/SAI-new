@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="center"
@@ -21,7 +20,7 @@
             android:layout_weight="1"
             android:contentDescription="@string/help"
             android:scaleType="center"
-            app:srcCompat="@drawable/ic_help" />
+            app:srcCompat="@drawable/ic_setting_1" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -72,12 +71,16 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/button_install"
         style="@style/SAIMaterialButton.ExtendedFab"
-        android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="8dp"
         android:text="@string/installer_install_apks"
+        android:layout_above="@id/bottomnav_main"
         app:icon="@drawable/ic_install_full"
         app:iconSize="16dp" />
 
-
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomnav_main"
+        style="@style/SAIBottomNavigationView"
+        android:layout_alignParentBottom="true"
+        app:menu="@menu/bottom_navigation" />
 </RelativeLayout>

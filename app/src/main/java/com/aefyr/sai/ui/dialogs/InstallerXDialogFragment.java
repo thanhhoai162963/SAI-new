@@ -235,7 +235,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
 
     private void checkPermissionsAndPickFiles(boolean ignorePermissions) {
         mActionAfterGettingStoragePermissions = PICK_WITH_INTERNAL_FILEPICKER;
-        if (Utils.apiIsAtLeast(30) && !ignorePermissions) {
+        if (Utils.apiIsAtLeast(30)) {
             if (requireContext().checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 SimpleAlertDialogFragment.newInstance(requireContext(), R.string.warning, R.string.installerx_thank_you_scoped_storage_very_cool).show(getChildFragmentManager(), DIALOG_TAG_Q_SAF_WARNING_INTERNAL);
                 return;
@@ -258,7 +258,7 @@ public class InstallerXDialogFragment extends BaseBottomSheetDialogFragment impl
     }
 
     private void pickFilesWithSaf(boolean ignorePermissions) {
-        if (Utils.apiIsAtLeast(30) && !ignorePermissions) {
+        if (Utils.apiIsAtLeast(30)) {
             if (requireContext().checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 SimpleAlertDialogFragment.newInstance(requireContext(), R.string.warning, R.string.installerx_thank_you_scoped_storage_very_cool).show(getChildFragmentManager(), DIALOG_TAG_Q_SAF_WARNING_EXTERNAL);
                 return;

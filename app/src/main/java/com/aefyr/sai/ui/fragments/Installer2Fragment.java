@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ClipData;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -31,6 +32,8 @@ import com.aefyr.sai.ui.dialogs.ErrorLogDialogFragment2;
 import com.aefyr.sai.ui.dialogs.FilePickerDialogFragment;
 import com.aefyr.sai.ui.dialogs.InstallationConfirmationDialogFragment;
 import com.aefyr.sai.ui.dialogs.InstallerXDialogFragment;
+import com.aefyr.sai.ui.dialogs.SettingDialog;
+import com.aefyr.sai.ui.dialogs.SimpleAlertDialog2Fragment;
 import com.aefyr.sai.ui.dialogs.SimpleAlertDialogFragment;
 import com.aefyr.sai.ui.dialogs.ThemeSelectionDialogFragment;
 import com.aefyr.sai.ui.recycler.RecyclerPaddingDecoration;
@@ -50,12 +53,14 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
-public class Installer2Fragment extends InstallerFragment implements FilePickerDialogFragment.OnFilesSelectedListener, InstallationConfirmationDialogFragment.ConfirmationListener, SaiPiSessionsAdapter.ActionDelegate, SimpleAlertDialogFragment.OnDismissListener {
+public class Installer2Fragment extends InstallerFragment implements FilePickerDialogFragment.OnFilesSelectedListener, InstallationConfirmationDialogFragment.ConfirmationListener, SaiPiSessionsAdapter.ActionDelegate, SimpleAlertDialogFragment.OnDismissListener, SettingDialog.Callback<String>, SimpleAlertDialog2Fragment.OnDismissListener2 {
     private static final String TAG = "Installer2Fragment";
 
     private static final int REQUEST_CODE_GET_FILES = 337;
+    private static final int APP_STORAGE_ACCESS_REQUEST_CODE = 338;
 
     private InstallerViewModel mViewModel;
 
@@ -68,7 +73,6 @@ public class Installer2Fragment extends InstallerFragment implements FilePickerD
 
     private ToolTipsManager mToolTipsManager;
     private Boolean mChekDialogPermission = true;
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -131,10 +135,18 @@ public class Installer2Fragment extends InstallerFragment implements FilePickerD
                 ThemeSelectionDialogFragment.newInstance(requireContext()).show(getChildFragmentManager(), "theme_selection_dialog");
             }
         }));
-        findViewById(R.id.ib_help).setOnClickListener((v) -> AlertsUtils.showAlert(this, R.string.help, R.string.installer_help_new));
+        findViewById(R.id.ib_help).setOnClickListener((v) -> {
+            //AlertsUtils.showAlert(this, R.string.help, R.string.installer_help_new)
+            SettingDialog settingDialog = new SettingDialog();
+            settingDialog.show(getChildFragmentManager(), "");
+
+
+        });
 
         Button installButtton = findViewById(R.id.button_install);
         installButtton.setOnClickListener((v) -> {
+
+
             if (mHelper.isInstallerXEnabled())
                 openInstallerXDialog(null);
             else
@@ -143,8 +155,13 @@ public class Installer2Fragment extends InstallerFragment implements FilePickerD
         installButtton.setOnLongClickListener((v) -> {
             if (mHelper.isInstallerXEnabled())
                 openInstallerXDialog(null);
-            else
+            else {
+                Intent intent = new Intent();
+                intent.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                startActivity(intent);
                 pickFilesWithSaf();
+
+            }
 
             return true;
         });
@@ -213,18 +230,38 @@ public class Installer2Fragment extends InstallerFragment implements FilePickerD
         if (existingDialog != null)
             existingDialog.dismiss();
 
-        if (checkPermission()) {
-            InstallerXDialogFragment.newInstance(apkSourceUri, null).show(getChildFragmentManager(), "installerx_dialog");
+        if (checkPermissionAllFile()) {
+            if (checkPermissionUnknowFile()) {
+                InstallerXDialogFragment.newInstance(apkSourceUri, null).show(getChildFragmentManager(), "installerx_dialog");
+            } else {
+                SimpleAlertDialog2Fragment.newInstance(requireContext(), R.string.warning, R.string.installerx_thank_you_obb_very_cool).show(getChildFragmentManager(), "DIALOG_TAG_Q_SAF_WARNING");
+            }
         } else {
-            SimpleAlertDialogFragment.newInstance(requireContext(), R.string.warning, R.string.installerx_thank_you_obb_very_cool).show(getChildFragmentManager(), "DIALOG_TAG_Q_SAF_WARNING");
+            SimpleAlertDialogFragment.newInstance(requireContext(), R.string.warning, R.string.installerx_thank_you_all_file_very_cool).show(getChildFragmentManager(), "DIALOG_TAG_Q_SAF_WARNING");
         }
 
     }
 
-    private boolean checkPermission() {
+    private boolean checkPermissionUnknowFile() {
         boolean allow = false;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             allow = getActivity().getPackageManager().canRequestPackageInstalls();
+        } else {
+            try {
+                allow = Settings.Secure.getInt(getActivity().getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS) == 1;
+            } catch (Settings.SettingNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        return allow;
+    }
+
+    private boolean checkPermissionAllFile() {
+        boolean allow = false;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                allow = Environment.isExternalStorageManager();
+            }
         } else {
             try {
                 allow = Settings.Secure.getInt(getActivity().getContentResolver(), Settings.Secure.INSTALL_NON_MARKET_APPS) == 1;
@@ -391,12 +428,45 @@ public class Installer2Fragment extends InstallerFragment implements FilePickerD
         Intent intent = new Intent();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            intent.setAction(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+            //intent.setAction(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+            intent.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
         } else {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             intent.setAction(Settings.ACTION_SECURITY_SETTINGS);
         }
         startActivity(intent);
+    }
+
+    @Override
+    public void onSuccess(String result) {
+        if (result == "vi") {
+            restartLanguageApp(result);
+        } else if (result == "en") {
+            restartLanguageApp(result);
+        }
+    }
+
+
+    private void restartLanguageApp(String lang) {
+        Locale locale = new Locale(lang);
+        Locale.setDefault(locale);
+        Configuration config = requireContext().getResources().getConfiguration();
+        config.locale = locale;
+        requireContext().getResources().updateConfiguration(config, requireContext().getResources().getDisplayMetrics());
+        getActivity().recreate();
+    }
+
+    @Override
+    public void onFailed(String error) {
+
+    }
+
+    @Override
+    public void onDialogDismissed2(@NonNull String dialogTag) {
+        Intent intent1 = new Intent();
+        intent1.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent1.setAction(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+        startActivity(intent1);
     }
 }
 

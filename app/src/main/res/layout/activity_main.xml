@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:keepScreenOn="true"
+    android:id="@+id/parent"
     tools:context=".ui.activities.MainActivity">
 
     <FrameLayout
@@ -17,6 +18,7 @@
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomnav_main"
+        android:visibility="gone"
         style="@style/SAIBottomNavigationView"
         android:layout_alignParentBottom="true"
         app:menu="@menu/bottom_navigation" />
